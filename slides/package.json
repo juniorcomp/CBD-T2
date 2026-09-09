@@ -1,0 +1,16 @@
+{
+  "name": "cbd-t2-slides",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "slidev slides.md",
+    "build": "slidev build slides.md",
+    "export": "slidev export slides.md --per-slide",
+    "export:pptx": "slidev export slides.md --format pptx --per-slide"
+  },
+  "dependencies": {
+    "@slidev/cli": "^0.48.0",
+    "@slidev/theme-default": "latest",
+    "playwright-chromium": "^1.42.0"
+  }
+}

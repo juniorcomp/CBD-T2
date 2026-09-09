@@ -1,0 +1,16 @@
+# Dependências Node.js
+node_modules/
+dist/
+
+# Auxiliares LaTeX
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.pdf
+!main.pdf
