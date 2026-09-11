@@ -33,8 +33,8 @@ A interface **SATA** (Serial ATA) emergiu como evolução da interface Parallel 
 | Geração | Taxa de Transferência | Codificação | Ano de Introdução |
 |---------|----------------------|-------------|-------------------|
 | SATA I (1.5 Gb/s) | ~150 MB/s | 8b/10b | 2003 |
-| SATA II (3 Gb/s) | ~300 MB/s | 8b/10b | 2004 |
-| SATA III (6 Gb/s) | ~600 MB/s | 8b/10b | 2009 |
+| SATA 3 Gb/s | ~300 MB/s | 8b/10b | 2004 |
+| SATA 6 Gb/s | ~600 MB/s | 8b/10b | 2009 |
 
 O protocolo SATA utiliza o conjunto de comandos **ATA Command Set (ACS)**, que inclui o **NCQ (Native Command Queuing)** com profundidade de fila de até 32 comandos. O NCQ permite que o controlador do disco reordene as requisições de I/O para minimizar o tempo de busca (*seek time*), o que é particularmente relevante para HDDs onde a latência rotacional e o posicionamento do atuador são fatores determinantes de desempenho (SILBERSCHATZ; KORTH; SUDARSHAN, 2019).
 
@@ -42,7 +42,7 @@ O protocolo SATA utiliza o conjunto de comandos **ATA Command Set (ACS)**, que i
 
 #### 1.2.2 eSATA (External Serial ATA)
 
-O **eSATA** é a extensão externa do padrão SATA, definido a partir da revisão SATA 2.6, que especifica conectores e cabos blindados para uso externo ao gabinete do computador. O eSATA mantém a mesma largura de banda da interface SATA interna correspondente (até 6 Gb/s no SATA III), diferenciando-se do USB e FireWire por não introduzir overhead de tradução de protocolo.
+O **eSATA** é a extensão externa do padrão SATA, definida para conectores e cabos apropriados ao uso fora do gabinete. O eSATA mantém a mesma largura de banda da interface SATA interna correspondente (até 6 Gb/s no SATA 6 Gb/s), diferenciando-se do USB e FireWire por não introduzir camadas de tradução de protocolo típicas de armazenamento USB.
 
 O conector eSATA é eletricamente idêntico ao SATA interno, porém com blindagem aprimorada e um formato de conector que suporta até 5.000 ciclos de inserção/remoção (contra 50 ciclos do conector SATA interno). Uma limitação importante é a **ausência de alimentação elétrica** pelo cabo eSATA padrão — embora a variante **eSATAp** (powered eSATA) combine dados SATA com alimentação USB para dispositivos de menor consumo.
 
@@ -119,7 +119,7 @@ Em arquiteturas DAS corporativas, o HBA é o elemento central que viabiliza a co
 
 | Interface | Taxa Máxima | Distância Máx. | Hot-Swap | Profundidade de Fila | Alimentação | Uso Primário |
 |-----------|------------|-----------------|----------|---------------------|-------------|--------------|
-| SATA III | 6 Gb/s | 1 m (interno) | Sim | 32 (NCQ) | N/A (interno) | Desktop, NAS, storage econômico |
+| SATA 6 Gb/s | 6 Gb/s | 1 m (interno) | Sim | 32 (NCQ) | N/A (interno) | Desktop, NAS, storage econômico |
 | eSATA | 6 Gb/s | 2 m | Sim | 32 (NCQ) | Não (padrão) | Backup externo direto |
 | SAS-4 | 22,5 Gb/s | 10 m | Sim | 256 | N/A (interno) | Servidores, RAID empresarial |
 | FireWire 800 | 800 Mb/s | 4,5 m | Sim | N/A | Sim (até 45W) | Legado, mídia digital |
@@ -476,7 +476,7 @@ Em um array de *n* discos, cada grupo de strips contém *n-2* strips de dados, 1
 
 #### Recomendações de Uso em BD
 
-O RAID 6 é recomendado para bancos de dados de **missão crítica** com discos de grande capacidade (≥4 TB), onde o tempo de reconstrução prolongado torna a janela de vulnerabilidade do RAID 5 inaceitável. É particularmente adequado para data warehouses de grande escala, sistemas de arquivamento de longo prazo e qualquer cenário onde a perda de dados é catastrófica. Elmasri e Navathe (2016) identificam o RAID 6 como o nível mínimo aceitável para arrays com mais de 8 discos em ambientes de produção.
+O RAID 6 deve ser considerado para bancos de dados de **missão crítica** quando a capacidade dos discos, o tempo de reconstrução, a criticidade dos dados e o risco durante a operação degradada tornam insuficiente a tolerância de uma falha do RAID 5. É particularmente adequado a cargas de leitura e a cenários em que dupla paridade justifica a penalidade adicional de escrita. Não há um limiar universal de capacidade ou número de discos aplicável a todo ambiente de produção.
 
 ### 4.8 RAID 0+1 (RAID 01) — Striping Espelhado
 
@@ -662,6 +662,94 @@ O avanço das tecnologias de armazenamento — incluindo SSDs NVMe, Storage Clas
 
 ---
 
+---
+
+## 8. Fontes Online Complementares — Cenários Práticos
+
+As fontes abaixo foram consultadas para embasar os **quatro cenários práticos** inseridos no relatório (`main.tex`). Elas complementam as referências bibliográficas dos livros-texto com documentação oficial e análises técnicas da indústria.
+
+---
+
+### 8.1 Cenário 1 — RAID 1 em Logs de Transação (WAL)
+
+#### [F1] PostgreSQL Global Development Group — WAL Configuration
+- **URL:** <https://www.postgresql.org/docs/current/wal-configuration.html>
+- **Acesso em:** setembro de 2026
+- **Chave BibTeX:** `postgresql_wal_config`
+- **Conteúdo relevante:**
+  - Descreve o mecanismo de *Write-Ahead Logging* (WAL) como sequencial e síncrono: cada *commit* de transação deve ser persistido no `pg_wal` antes de ser confirmado à aplicação.
+  - Explica a importância de um dispositivo de armazenamento fisicamente dedicado ao WAL para evitar contenção de I/O com os *tablespaces* de dados.
+  - Documenta que controladoras com *battery-backed write cache* (BBU) permitem confirmação do *commit* quando o dado atinge o *cache* protegido, reduzindo a latência sem comprometer a durabilidade (ACID).
+  - **Recomendação explícita:** alocar `pg_wal` em RAID 1 com SAS + BBU em ambientes de produção.
+
+#### [F2] ServerFault — pg_wal on dedicated RAID 1 (Comunidade)
+- **URL:** <https://serverfault.com> (thread sobre PostgreSQL pg_wal storage best practices)
+- **Acesso em:** setembro de 2026
+- **Conteúdo relevante:** Confirma que a prática padrão da indústria é isolar o `pg_wal` em espindles físicos separados com RAID 1, evitando que I/O aleatório dos dados concorra com o I/O sequencial do WAL.
+
+---
+
+### 8.2 Cenário 2 — RAID 5 e a Penalidade de Escrita
+
+#### [F3] IBM Documentation — Understanding RAID Levels and Write Penalty
+- **URL:** <https://www.ibm.com/docs/en/storage-insights>
+- **Acesso em:** setembro de 2026
+- **Chave BibTeX:** `ibm_raid_levels`
+- **Conteúdo relevante:**
+  - Documenta formalmente as **4 operações físicas de I/O** geradas por uma única escrita lógica em RAID 5 (*read-modify-write*):
+    1. Leitura do bloco antigo de dados
+    2. Leitura do bloco de paridade antigo
+    3. Gravação do novo dado
+    4. Gravação da nova paridade calculada via XOR
+  - Explica por que a *write penalty* de fator 4 torna o RAID 5 inadequado para cargas OLTP com escritas aleatórias de alta frequência.
+  - Compara com RAID 10, cuja *write penalty* é de apenas fator 2 (nenhum cálculo de paridade; apenas espelhamento direto).
+
+#### [F4] Arcserve — RAID 5 vs. RAID 10 for Databases
+- **URL:** <https://www.arcserve.com/blog/raid-5-vs-raid-6>
+- **Acesso em:** setembro de 2026
+- **Chave BibTeX:** `arcserve_raid_comparison`
+- **Conteúdo relevante:** Analisa o impacto da *write penalty* do RAID 5 em bancos de dados transacionais e recomenda RAID 10 para OLTP e RAID 5/6 para OLAP.
+
+---
+
+### 8.3 Cenário 3 — RAID 10 em Ambiente OLTP de Alta Concorrência
+
+#### [F5] TechTarget Storage — RAID 10 (RAID 1+0): What It Is and When to Use It
+- **URL:** <https://www.techtarget.com/searchstorage/definition/RAID-10-RAID-1-plus-0>
+- **Acesso em:** setembro de 2026
+- **Chave BibTeX:** `techtarget_raid10`
+- **Conteúdo relevante:**
+  - Descreve a arquitetura *mirror-then-stripe* do RAID 10 e por que essa ordem importa (a falha de um disco afeta apenas o par local, não o *stripe* inteiro como no RAID 0+1).
+  - Confirma o custo de **2 I/Os físicos por escrita** (um para o disco original, um para o espelho), sem cálculo de paridade.
+  - Destaca a ausência de *parity storms* (acúmulo de operações de paridade) em cargas de alta concorrência de escritas.
+  - Recomenda RAID 10 para sistemas bancários, e-commerce e ERP com milhares de transações simultâneas.
+
+#### [F6] IBM — RAID Levels Comparison (Write I/O)
+- **URL:** <https://www.ibm.com/docs/en/storage-insights> (seção de comparação de níveis)
+- **Acesso em:** setembro de 2026
+- **Chave BibTeX:** `ibm_raid_levels` (mesma entrada de [F3])
+- **Conteúdo relevante:** Tabela comparativa de *write penalties*: RAID 5 = 4×, RAID 6 = 6×, RAID 10 = 2× — validando o cenário numérico descrito no relatório.
+
+---
+
+### 8.4 Cenário 4 — Falha Dupla e Reconstrução: RAID 5 vs. RAID 6
+
+#### [F7] Arcserve — RAID 5 vs. RAID 6: What's the Difference?
+- **URL:** <https://www.arcserve.com/blog/raid-5-vs-raid-6>
+- **Acesso em:** setembro de 2026
+- **Chave BibTeX:** `arcserve_raid_comparison`
+- **Conteúdo relevante:**
+  - Analisa o risco de *latent sector errors* (LSE / *bit rot*) durante o processo de *rebuild* do RAID 5: qualquer setor ilegível nos discos sobreviventes durante a reconstrução resulta em falha completa e perda permanente de dados.
+  - Documenta que o RAID 6, com dupla paridade (*P* via XOR + *Q* via Reed-Solomon), pode completar o *rebuild* mesmo se um segundo disco falhar ou se um setor latente for encontrado em outro disco durante o processo.
+  - Aponta que drives de alta capacidade (8 TB+) aumentam o tempo de *rebuild* para 12–48 horas, elevando estatisticamente a probabilidade de um segundo evento de falha durante a janela de vulnerabilidade.
+
+#### [F8] Enterprise Storage Forum — When RAID 5 is Not Enough
+- **URL:** <https://www.enterprisestorageforum.com>
+- **Acesso em:** setembro de 2026
+- **Conteúdo relevante:** Reforça a recomendação de RAID 6 para *arrays* com mais de 6–8 discos ou com discos de capacidade superior a 4 TB, onde o MTTDL do RAID 5 cai a níveis inaceitáveis para aplicações críticas.
+
+---
+
 ## Referências Bibliográficas
 
 1. ELMASRI, R.; NAVATHE, S. B. **Fundamentals of Database Systems**. 7. ed. Hoboken: Pearson, 2016.
@@ -671,3 +759,11 @@ O avanço das tecnologias de armazenamento — incluindo SSDs NVMe, Storage Clas
 3. PATTERSON, D. A.; GIBSON, G. A.; KATZ, R. H. A Case for Redundant Arrays of Inexpensive Disks (RAID). In: **ACM SIGMOD International Conference on Management of Data**, 1988, Chicago. Proceedings. New York: ACM, 1988. p. 109–116.
 
 4. SILBERSCHATZ, A.; KORTH, H. F.; SUDARSHAN, S. **Database System Concepts**. 7. ed. New York: McGraw-Hill Education, 2019.
+
+5. POSTGRESQL GLOBAL DEVELOPMENT GROUP. **Write-Ahead Logging (WAL) — PostgreSQL 16 Documentation**. Disponível em: <https://www.postgresql.org/docs/current/wal-configuration.html>. Acesso em: set. 2026.
+
+6. IBM DOCUMENTATION. **Understanding RAID Levels and Write Penalty**. Disponível em: <https://www.ibm.com/docs/en/storage-insights>. Acesso em: set. 2026.
+
+7. TECHTARGET — STORAGE. **RAID 10 (RAID 1+0): What It Is and When to Use It**. Disponível em: <https://www.techtarget.com/searchstorage/definition/RAID-10-RAID-1-plus-0>. Acesso em: set. 2026.
+
+8. ARCSERVE. **RAID 5 vs. RAID 6: What's the Difference?** Disponível em: <https://www.arcserve.com/blog/raid-5-vs-raid-6>. Acesso em: set. 2026.

@@ -18,12 +18,12 @@ Roteiro, parte 1. Serve para o texto da Etapa 2 e para os primeiros slides de co
 
 | Interface | Taxa de Transf. (Típica) | Custo | Confiabilidade (MTBF relativo) | Recomendação SBD |
 |---|---|---|---|---|
-| **SATA** [1] | 600 MB/s (SATA III) | Baixo | Menor (projetado para desktop) | Armazenamento frio, arquivamento ou volumes não críticos [2] |
+| **SATA** [1] | até 600 MB/s (SATA 6 Gb/s) | Baixo | Depende do disco, firmware, controlador e ambiente; não da interface isoladamente | Servidores de entrada e volumes cuja criticidade foi avaliada [2] |
 | **eSATA** [1] | 600 MB/s | Baixo | Menor | Obsoleto/raro em SBD, superado pelo USB 3.0 para conexões externas |
-| **SAS** [3] | 1200 MB/s a 22.5 GB/s (SAS-4) | Alto | Muito Alta (comandos SCSI, full-duplex) | Carga analítica (OLAP) e transacional (OLTP) corporativa pesada. Tier 1. |
-| **USB 3/4** [1] | 5 Gbps a 40 Gbps | Baixo | Baixa (overhead de protocolo, não otimizado para I/O constante) | Backups pontuais offline, transferência temporária. Nunca para dados live [2] |
-| **Firewire** [1] | 400 a 800 Mbps | Alto (histórico) | Média | Obsoleto. Antiga alternativa para daisy-chaining antes do avanço do USB/Thunderbolt |
-| **HBA (Host Bus Adapter)** [3] | Depende do barramento PCIe | Alto | Muito Alta | Fundamental para SBDs robustos: desonera a CPU do host da carga de gerenciar discos e RAIDs de hardware [4] |
+| **SAS** [3] | até 12 Gb/s por lane (SAS-3) ou 22,5 Gb/s por lane (SAS-4) | Alto | A confiabilidade depende do conjunto; SAS oferece recursos como filas maiores e T10-PI quando suportado ponta a ponta | Carga analítica e transacional corporativa, após dimensionamento do HBA e discos. |
+| **USB 3/4** [1] | 5 Gb/s a até 80 Gb/s | Baixo | Depende do dispositivo e da topologia; o barramento compartilhado pode variar a latência | Backup, desenvolvimento e DAS externo; produção exige validação de desempenho, integridade e recuperação [2] |
+| **FireWire** [1] | 400 a 800 Mb/s | Histórico | Interface legada; a confiabilidade depende do dispositivo conectado | Obsoleto para novos SBDs; referência histórica de encadeamento de dispositivos. |
+| **HBA (Host Bus Adapter)** [3] | Depende do PCIe e da interface de disco | Variável | É adaptador/controlador, não interface de disco; recursos dependem do modelo e firmware | Integra o host a SAS/SATA e pode expor discos diretamente ou operar como controladora RAID [4] |
 
 > **Nota:** SAS e SATA usam conectores fisicamente compatíveis, mas eletricamente 
 > e logicamente diferentes. Um controlador SAS aceita discos SATA (barateando custos 

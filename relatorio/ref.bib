@@ -9,7 +9,7 @@
   publisher = {McGraw-Hill Education},
   year      = {2020},
   isbn      = {978-0-07-802215-9},
-  note      = {Capítulos 12--14: Storage and File Structure, Data Storage Structures, Indexing}
+  note      = {Seção 12.5: RAID}
 }
 
 @book{elmasri2016,
@@ -19,7 +19,7 @@
   publisher = {Pearson},
   year      = {2016},
   isbn      = {978-0-13-397077-7},
-  note      = {Capítulo 13: Disk Storage, Basic File Structures, Hashing, and Modern Storage Architectures}
+  note      = {Capítulo 16, Seção 16.10: Parallelizing Disk Access Using RAID Technology, pp. 584--588}
 }
 
 @inproceedings{patterson1988,
@@ -40,5 +40,238 @@
   publisher = {Pearson Prentice Hall},
   year      = {2009},
   isbn      = {978-0-13-187325-4},
-  note      = {Parte 2: Elements of Relational Database Systems --- Cap. 12: Data Storage}
+  note      = {Seções 13.3 e 13.4, indicadas no roteiro da tarefa}
+}
+
+% =====================================================================
+%  Fontes Online Complementares (Cenários Práticos)
+% =====================================================================
+
+
+
+
+
+
+
+
+
+@misc{sata_io_naming,
+  author       = {{Serial ATA International Organization}},
+  title        = {SATA Naming Guidelines},
+  howpublished = {\url{https://sata-io.org/developers/sata-naming-guidelines}},
+  note         = {Acesso em: 10 set. 2026. Define a nomenclatura SATA 1.5 Gb/s, 3 Gb/s e 6 Gb/s e desaconselha ``SATA II/III''.}
+}
+
+@misc{usb4_spec,
+  author       = {{USB Implementers Forum}},
+  title        = {USB4\textsuperscript{\textregistered} Specification v2.0},
+  howpublished = {\url{https://usb.org/document-library/usb4r-specification-v20}},
+  note         = {Acesso em: 10 set. 2026.}
+}
+
+@misc{netapp_raid_dp,
+  author       = {{NetApp}},
+  title        = {ONTAP RAID Groups and Local Tiers},
+  year         = {2025},
+  howpublished = {\url{https://docs.netapp.com/us-en/ontap/concepts/aggregates-raid-groups-concept.html}},
+  note         = {Acesso em: 10 set. 2026.}
+}
+
+@misc{intel_matrix,
+  author       = {{Intel}},
+  title        = {Matrix RAID Volumes for Single RAID Arrays},
+  howpublished = {\url{https://www.intel.com/content/www/us/en/support/articles/000006406/technologies.html}},
+  note         = {Acesso em: 10 set. 2026.}
+}
+
+
+
+@misc{postgresql_wal_config,
+  author = {{PostgreSQL Global Development Group}},
+  title = {{PostgreSQL 16: Write Ahead Log}},
+  howpublished = {\url{https://www.postgresql.org/docs/16/runtime-config-wal.html}},
+  note = {Acesso em: 10 set. 2026. Seção 20.5; parâmetros fsync e synchronous_commit.}
+}
+
+@misc{sata_esata,
+  author = {{Serial ATA International Organization}},
+  title = {{eSATA}},
+  howpublished = {\url{https://sata-io.org/developers/sata-ecosystem/esata?language=en}},
+  note = {Acesso em: 10 set. 2026. }
+}
+
+@misc{intel_ahci,
+  author = {{Intel Corporation}},
+  title = {{Serial ATA Advanced Host Controller Interface (AHCI), Revision 1.3.1}},
+  year = {2011},
+  howpublished = {\url{https://www.intel.com/content/dam/www/public/us/en/documents/technical-specifications/serial-ata-ahci-spec-rev1-3-1.pdf}},
+  note = {Acesso em: 10 set. 2026. Interface de programação, command list e NCQ.}
+}
+
+@misc{microchip_sas4,
+  author = {{Microchip Technology}},
+  title = {{24G SAS Technology}},
+  howpublished = {\url{https://www.microchip.com/en-us/solutions/data-centers-and-computing/data-center-solutions/technologies/24g-sas-technology}},
+  note = {Acesso em: 10 set. 2026. }
+}
+
+@misc{microchip_storage,
+  author = {{Microchip Technology}},
+  title = {{Smart Storage Platform}},
+  howpublished = {\url{https://www.microchip.com/en-us/products/storage/smart-storage-platform}},
+  note = {Acesso em: 10 set. 2026. }
+}
+
+@misc{seagate_sas,
+  author = {{Seagate Technology}},
+  title = {{Barracuda ES.2 SAS Product Manual}},
+  howpublished = {\url{https://www.seagate.com/staticfiles/support/disc/manuals/enterprise/Barracuda%20ES/SAS/100496298g.pdf}},
+  note = {Acesso em: 10 set. 2026. Publicação 100496298, revisão G; exemplo de fila específica do produto.}
+}
+
+@misc{ti_firewire,
+  author = {{Texas Instruments}},
+  title = {{TSB83AA23: IEEE 1394b OHCI Controller}},
+  howpublished = {\url{https://www.ti.com/product/TSB83AA23/part-details/TSB83AA23ZAY}},
+  note = {Acesso em: 10 set. 2026. }
+}
+
+@misc{usb32,
+  author = {{USB Implementers Forum}},
+  title = {{USB 3.2}},
+  howpublished = {\url{https://www.usb.org/usb-32}},
+  note = {Acesso em: 10 set. 2026. }
+}
+
+@misc{usb4_announcement,
+  author = {{USB Implementers Forum}},
+  title = {{USB-IF Announces Publication of New USB4 Specification to Enable USB 80Gbps Performance}},
+  year = {2022},
+  howpublished = {\url{https://www.usb.org/sites/default/files/2022-10/USB-IF%20USB%2080Gbps%20Announcement_FINAL_v2.pdf}},
+  note = {Acesso em: 10 set. 2026. Comunicado de 18 de outubro de 2022.}
+}
+
+@misc{usb_pd,
+  author = {{USB Implementers Forum}},
+  title = {{USB Charger (USB Power Delivery)}},
+  howpublished = {\url{https://www.usb.org/usb-charger-pd}},
+  note = {Acesso em: 10 set. 2026. }
+}
+
+@misc{usb_uas,
+  author = {{USB Implementers Forum}},
+  title = {{USB Attached SCSI Protocol (UASP) v1.0 and Adopters Agreement}},
+  year = {2009},
+  howpublished = {\url{https://www.usb.org/document-library/usb-attached-scsi-protocol-uasp-v10-and-adopters-agreement}},
+  note = {Acesso em: 10 set. 2026. }
+}
+
+@misc{snia_dictionary,
+  author = {{Storage Networking Industry Association}},
+  title = {{The 2016 SNIA Dictionary, version 2016.1}},
+  year = {2016},
+  howpublished = {\url{https://www.snia.org/sites/default/files/dictionary/SNIADictionaryv2016_1.pdf}},
+  note = {Acesso em: 10 set. 2026. Verbetes DAS, HBA, MTBF, MTTF, MTTR e mean time to data loss.}
+}
+
+@misc{nist_mtbf,
+  author = {{NIST/SEMATECH}},
+  title = {{e-Handbook of Statistical Methods: Exponential life distribution (or HPP model) tests}},
+  howpublished = {\url{https://www.itl.nist.gov/div898/handbook/apr/section3/apr311.htm}},
+  note = {Acesso em: 10 set. 2026. Seção 8.3.1.1.}
+}
+
+@misc{dbbook_storage,
+  author = {Abraham Silberschatz and Henry F. Korth and S. Sudarshan},
+  title = {{Database System Concepts: Chapter 12, Physical Storage Systems}},
+  howpublished = {\url{https://www.db-book.com/slides-dir/PDF-dir/ch12.pdf}},
+  note = {Acesso em: 10 set. 2026. Material didático oficial dos autores, 7a edição.}
+}
+
+@misc{highpoint_15,
+  author = {{HighPoint Technologies}},
+  title = {{HPT370/372N RAID Controller: User Manual, Revision 1.0}},
+  year = {2003},
+  howpublished = {\url{https://doczz.net/doc/5385162/hpt370-372-raid-controller}},
+  note = {Acesso em: 10 set. 2026. Fevereiro de 2003. Manual primário consultado em reprodução hospedada por terceiros; seções de criação, duplicação e rebuild.}
+}
+
+@misc{dfi_15,
+  author = {{DFI}},
+  title = {{System Board User Manual, Revision AA+, publication 77410347}},
+  howpublished = {\url{https://www.manuallib.com/download/pdf8/REV.-AA--SYSTEM-BOARD-USER-MANUAL.PDF}},
+  note = {Acesso em: 10 set. 2026. Manual primário, cópia histórica em repositório de terceiros; p. 10, HighPoint 372N e RAID 1.5.}
+}
+
+@misc{storagecomputer_7,
+  author = {{Storage Computer Corporation}},
+  title = {{Form 10-K: fiscal year ended December 31, 2002}},
+  year = {2003},
+  howpublished = {\url{https://www.sec.gov/Archives/edgar/data/933452/000092701603001556/d10k.htm}},
+  note = {Acesso em: 10 set. 2026. Seção Business/Products; documento do fabricante preservado pela SEC.}
+}
+
+
+
+@misc{raid5_io,
+  author = {{K. Gopinath}},
+  title = {{RAID5 I/O Handling}},
+  year = {2000},
+  howpublished = {\url{https://www.usenix.org/legacy/publications/library/proceedings/usenix2000/freenix/full_papers/gopinath/gopinath_html/node24.html}},
+  note = {Acesso em: 10 set. 2026. Seção técnica de artigo do FREENIX/USENIX; 25 de abril de 2000.}
+}
+
+@misc{redhat_raid,
+  author = {{Red Hat}},
+  title = {{Red Hat Enterprise Linux 8: Managing storage devices, Managing RAID}},
+  howpublished = {\url{https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/8/html/managing_storage_devices/managing-raid_managing-storage-devices}},
+  note = {Acesso em: 10 set. 2026. Layouts e requisitos específicos do Linux MD.}
+}
+
+@misc{spdk_raid5f,
+  author = {{Artur Paszkiewicz}},
+  title = {{raid5f: the SPDK RAID 5 implementation}},
+  year = {2024},
+  howpublished = {\url{https://spdk.io/news/2024/02/12/raid5f/}},
+  note = {Acesso em: 10 set. 2026. Documentação de implementação pelo desenvolvedor; 12 de fevereiro de 2024.}
+}
+
+@misc{raid_s_nasa,
+  author = {{Brett Quinn}},
+  title = {{RAID-S Technical Overview: RAID-4 and 5-Compliant Hardware and Software Functionality Improves Data Availability Through Use of XOR-Capable Disks in an Integrated Cached Disk Array}},
+  year = {1996},
+  howpublished = {\url{https://ntrs.nasa.gov/api/citations/19960052763/downloads/19960052763.pdf}},
+  note = {Acesso em: 10 set. 2026. EMC Corporation; artigo técnico preservado no NASA Technical Reports Server, registro 19960052763.}
+}
+
+@inproceedings{corbett2004,
+ author = {Peter Corbett and Bob English and Atul Goel and Tomislav Grcanac and Steven Kleiman and James Leong and Sunitha Sankar},
+ title = {{Row-Diagonal Parity for Double Disk Failure Correction}},
+ booktitle = {3rd USENIX Conference on File and Storage Technologies (FAST 04)},
+ year = {2004},
+ publisher = {USENIX Association},
+ note = {\url{https://www.usenix.org/conference/fast-04/row-diagonal-parity-double-disk-failure-correction}. Acesso em: 10 set. 2026.}
+}
+@inproceedings{plank2008,
+ author = {James S. Plank},
+ title = {{The RAID-6 Liberation Codes}},
+ booktitle = {6th USENIX Conference on File and Storage Technologies (FAST 08)},
+ year = {2008},
+ publisher = {USENIX Association},
+ note = {\url{https://www.usenix.org/event/fast08/tech/full_papers/plank/plank_html/index.html}. Acesso em: 10 set. 2026.}
+}
+@inproceedings{krioukov2008,
+ author = {Andrew Krioukov and Lakshmi N. Bairavasundaram and Garth R. Goodson and Kiran Srinivasan and Randy Thelen},
+ title = {{Parity Lost and Parity Regained}},
+ booktitle = {6th USENIX Conference on File and Storage Technologies (FAST 08)},
+ year = {2008},
+ publisher = {USENIX Association},
+ note = {\url{https://www.usenix.org/legacy/event/fast08/tech/full_papers/krioukov/krioukov_html/main.html}. Acesso em: 10 set. 2026.}
+}
+
+@misc{usb4_overview,
+ author = {{USB Implementers Forum}},
+ title = {{USB4 System Overview}},
+ howpublished = {\url{https://www.usb.org/sites/default/files/D1T1-3%20-%20USB4%20System%20Overview.pdf}},
+ note = {Acesso em: 10 set. 2026. Material técnico oficial sobre modos de 20 e 40 Gb/s.}
 }

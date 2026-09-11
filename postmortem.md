@@ -26,9 +26,11 @@
 
 | Integrante | Responsável por | Decisões que tomou e por quê |
 |---|---|---|
-| Nome do Aluno 1 — DRE XXXXXXXXX | | |
-| Nome do Aluno 2 — DRE XXXXXXXXX | | |
-| Nome do Aluno 3 — DRE XXXXXXXXX | | |
+| Daniel Rebouças de Sousa Barros — DRE 123273542 | Interfaces DAS e revisão de fontes técnicas para SATA, eSATA, SAS, FireWire, USB e HBA. | Priorizou documentação técnica para dados atuais de interface, pois os livros-base não cobrem todos os padrões recentes. |
+| Hugo Leandro Antunes — DRE 123143543 | RAID 0--4, striping e blocos de paridade. | Organizou a explicação por granularidade de distribuição, para relacionar arquitetura, paralelismo e gargalos de escrita. |
+| Jeson Wen Chen — DRE 123051883 | RAID 5/6 e métricas MTTF, MTTR, MTBF e MTTDL. | Explicitou as hipóteses das fórmulas e evitou limiar universal para recomendar RAID 6. |
+| João Batista Brasil Junior — DRE 121091172 | RAID 0+1/10, RAID não padrão e comparação de aplicações em SBD. | Diferenciou níveis compostos e qualificou implementações proprietárias conforme a documentação disponível. |
+| Pedro Cintra Silveira — DRE 123419342 | Integração do LaTeX, slides, referências e revisão final de coerência. | Manteve consistência entre o relatório, os slides e o checklist de entrega. |
 
 ---
 
@@ -38,9 +40,17 @@ Registre aqui toda escolha que exigiu julgamento humano. Exemplo: quais fontes u
 
 | Data | Quem decidiu | Decisão | Justificativa |
 |---|---|---|---|
-| 09/09/2026 | | **0.1** — | |
+| 09/09/2026 | Grupo — responsável individual a registrar | Usar PROPOSTA.md como fonte de verdade e manter checklist de entrega no README. | Evita esquecer PDF, slides, folha de rosto e Post-Mortem. |
+| 10/09/2026 | Grupo — responsável individual a registrar | Tratar interfaces atuais e RAID proprietário apenas com documentação oficial ou limitação explícita. | Livros-base não cobrem todos os padrões atuais; nomes proprietários não podem ser generalizados. |
+| 10/09/2026 | Grupo — responsável individual a registrar | Não usar limiar universal de número de discos para recomendar RAID 6. | A decisão depende de MTTR, capacidade, carga, criticidade e risco operacional. |
 
 ---
+
+### Decisões da revisão assistida (distintas das decisões humanas acima)
+
+| Data | Executor | Decisão | Justificativa |
+|---|---|---|---|
+| 10/09/2026 | Codex, sob pedido do usuário | Separar HDD/SSD, adotar modelos explícitos e fontes primárias; preservar autoria não documentada. | Evitar especificações e contribuições humanas inventadas. |
 
 ## 3. Log de prompts-chave
 
@@ -58,6 +68,29 @@ Registre aqui toda escolha que exigiu julgamento humano. Exemplo: quais fontes u
 - **O que voltou:** Checklist adicionado ao README e descrição da tarefa no proposta.md.
 - **O que o grupo fez com isso:** Estabeleceu a base para monitorar as entregas exigidas pelo professor.
 
+### Ferramentas declaradas pelo grupo
+
+- GPT-5.6 Terra;
+- Gemini 3.1;
+- Claude Sonnet;
+- Claude Optus 4.6 (denominação informada pelo grupo; confirmar o nome comercial antes da entrega).
+
+### Prompt 2 — fluxo de redação e revisão
+- **Data / quem / ferramenta:** a registrar pelo grupo.
+- **Objetivo:** gerar uma subseção em LaTeX por vez a partir de bibliografia fornecida e revisar erros técnicos, de formatação ou prolixidade apontados pelo grupo.
+- **Resultado e uso:** orientou a produção fragmentada e a tabela de correções da seção 4.
+
+### Prompt 3 — estrutura do estudo DAS e RAID
+- **Data / quem / ferramenta:** a registrar pelo grupo.
+- **Objetivo:** produzir rascunho em Markdown para interfaces DAS, desempenho, confiabilidade, striping, RAID padrão e RAID não padrão.
+- **Resultado e uso:** gerou material-base depois convertido e revisado para relatório e slides.
+
+### Prompt 4 — auditoria de coerência
+- **Data / quem:** a registrar pelo grupo.
+- **Ferramenta:** GPT-5.6 Terra.
+- **Objetivo:** confrontar proposta.md e readme.md quanto a escopo, precisão técnica, clareza e lacunas.
+- **Resultado e uso:** corrigiram-se instalação dos slides, checklists, nomenclatura SATA e trechos técnicos sem fonte suficiente.
+
 ---
 
 ## 4. Erros da IA e correções
@@ -66,7 +99,22 @@ Registre aqui toda escolha que exigiu julgamento humano. Exemplo: quais fontes u
 
 | # | Data | Onde (seção/tabela) | Erro gerado pela IA | Correção aplicada | Fonte que sustentou a correção | Quem corrigiu |
 |---|---|---|---|---|---|---|
-| 1 | | | | | | |
+| 1 | 10/09/2026 | RAID 2 e tabela comparativa | A IA afirmou “mínimo: 3 discos” como regra universal. | A quantidade de discos de redundância depende da implementação do código de Hamming e da quantidade de discos de dados; a regra foi removida. | Elmasri e Navathe, Seção 16.10, p. 587. | Revisão técnica do grupo — responsável a registrar |
+| 2 | 10/09/2026 | RAID-DP | Foram atribuídos algoritmo interno e limite universal de 28 discos sem fonte primária suficiente. | Mantida somente a propriedade verificável: duas paridades e tolerância a duas falhas; tamanho do grupo é orientação específica do ONTAP. | NetApp, ONTAP RAID Groups and Local Tiers. | Revisão técnica do grupo — responsável a registrar |
+| 3 | 10/09/2026 | RAID-S | Foi descrito como algoritmo que adapta dinamicamente a distribuição conforme o acesso. | Corrigido para tecnologia proprietária Symmetrix baseada em grupos de volumes de dados e paridade; não há evidência para adaptação dinâmica. | NASA/EMC, RAID-S Technical Overview. | Revisão técnica do grupo — responsável a registrar |
+| 4 | 10/09/2026 | Interfaces DAS | A IA usou “SATA II/III” e tratou MTBF como atributo da interface. | Adotada a nomenclatura SATA-IO e a confiabilidade passou a depender de disco, firmware, controlador e ambiente. | SATA-IO, SATA Naming Guidelines. | Revisão técnica do grupo — responsável a registrar |
+
+
+| 5 | 10/09/2026 | Interfaces | SAS-4: agregado de 4.500 MB/s; filas SAS fixadas em 256. | Corrigido cálculo para 4.800 MB/s e fila dependente do produto [chaves BibTeX: microchip_sas4,seagate_sas]. | Fontes em relatorio/ref.bib e pesquisa/revisao_fontes.md | Codex (IA); revisão humana não documentada |
+| 6 | 10/09/2026 | SATA/USB | AHCI confundido com protocolo físico; energia USB vinculada à geração. | Separadas interface de programação, transporte e Power Delivery [chaves BibTeX: intel_ahci,usb_pd]. | Fontes em relatorio/ref.bib e pesquisa/revisao_fontes.md | Codex (IA); revisão humana não documentada |
+| 7 | 10/09/2026 | eSATA | Origem atribuída à revisão SATA 2.6. | Especificações externas datadas de 2004 [chaves BibTeX: sata_esata]. | Fontes em relatorio/ref.bib e pesquisa/revisao_fontes.md | Codex (IA); revisão humana não documentada |
+| 8 | 10/09/2026 | RAID 1.5/7 | Atribuição a LSI/Broadcom e descrições sem funcionamento. | Identificada HighPoint; aprofundado RAID 7 com documentação primária [chaves BibTeX: highpoint_15,storagecomputer_7]. | Fontes em relatorio/ref.bib e pesquisa/revisao_fontes.md | Codex (IA); revisão humana não documentada |
+| 9 | 10/09/2026 | Confiabilidade | Igualdades de MTTDL sem modelo de reparo suficiente; MTBF sem convenção. | Derivadas aproximações com reparo serial exponencial e delimitada contagem de tempo [chaves BibTeX: nist_mtbf]. | Fontes em relatorio/ref.bib e pesquisa/revisao_fontes.md | Codex (IA); revisão humana não documentada |
+| 10 | 10/09/2026 | RAID 5/WAL | Quatro I/Os em toda escrita; commit sempre aguardando ambos os discos. | Separados RMW/full stripe, cache e modos de durabilidade [chaves BibTeX: raid5_io,postgresql_wal_config]. | Fontes em relatorio/ref.bib e pesquisa/revisao_fontes.md | Codex (IA); revisão humana não documentada |
+| 11 | 10/09/2026 | Integridade | Redundância apresentada como garantia de serviço ininterrupto. | Acrescentados limites, write hole, checksums e recuperação [chaves BibTeX: spdk_raid5f,krioukov2008]. | Fontes em relatorio/ref.bib e pesquisa/revisao_fontes.md | Codex (IA); revisão humana não documentada |
+| 12 | 10/09/2026 | Bibliografia | Link IBM genérico e PostgreSQL 16 com URL current. | Substituídas fontes e fixada versão; corrigida autoria do artigo EMC preservado pela NASA. | Fontes em relatorio/ref.bib e pesquisa/revisao_fontes.md | Codex (IA); revisão humana não documentada |
+| 13 | 10/09/2026 | Shadowing | Confusão entre espelhamento físico e ponto de commit na paginação sombra. | Separadas camadas e descrita troca atômica da referência persistente [chaves BibTeX: dbbook_storage,elmasri2016]. | Fontes em relatorio/ref.bib e pesquisa/revisao_fontes.md | Codex (IA); revisão humana não documentada |
+| 14 | 10/09/2026 | Comparação | Eficiência fixa de RAID 1 com múltiplas cópias e avaliações vagas de escrita. | Usada eficiência 1/m; comparadas cargas e acrescentados exemplos calculados. | Fontes em relatorio/ref.bib e pesquisa/revisao_fontes.md | Codex (IA); revisão humana não documentada |
 
 ### Erros a vigiar nesta tarefa específica (DAS e RAID)
 
@@ -82,5 +130,18 @@ Marque quando encontrar:
 
 Uma observação sobre o *padrão* dos erros vale mais do que a lista deles. Em que tipo de tarefa a IA foi confiável? Em que tipo ela falhou de forma sistemática? Onde a verificação humana precisou ser mais densa?
 
-### `[data]` — `[título da lição]`
-(Adicione lições ao longo do trabalho)
+### 10/09/2026 — Precisão diminui em nomenclaturas proprietárias
+
+IA foi útil para estruturar comparações, mas produziu detalhes não verificáveis sobre RAID 1.5, RAID-DP e RAID-S. Para esses tópicos, o grupo passou a aceitar documentação do fabricante ou a registrar explicitamente a limitação da fonte.
+
+### 10/09/2026 — Fórmulas exigem hipóteses
+
+Fórmulas de MTTDL ajudam a comparar cenários, mas não são previsão literal. O relatório passou a declarar hipóteses como independência das falhas, taxa constante e MTTR conhecido, além de lembrar que RAID não substitui backup testado.
+
+## Revisão técnica desta sessão — 10/09/2026
+
+- Ferramenta: Codex; solicitante não identificado nominalmente nesta sessão.
+- Prompt literal: “Faça correções todas as necessaárias. Posteriromente, melhore necessário use fonte externas também e as coloque referenciada no refbib e no final do maintext”
+- Resultado: relatório e bibliografia revisados; exemplos e modelos delimitados. Nenhum benchmark foi executado.
+- Limitação: não há compilador LaTeX disponível e o download solicitado não foi autorizado; não foi realizada inspeção visual de PDF.
+- A validação humana das atribuições anteriores e os prompts históricos completos não foram fornecidos.

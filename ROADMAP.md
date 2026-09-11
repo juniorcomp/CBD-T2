@@ -3,7 +3,17 @@
 Enunciado: [PROPOSTA.md](PROPOSTA.md). Como compilar: [README.md](README.md).
 Este arquivo é a **única fonte de verdade sobre progresso**.
 
-## Prazos
+## Revisão técnica solicitada em 10/09/2026
+
+- **Entrega:** relatório corrigido em `relatorio/main.tex`, bibliografia em `relatorio/ref.bib` e registro das correções.
+- **Pronto quando:** critérios cobertos, números rastreáveis, modelos delimitados e citações/referências cruzadas verificadas.
+- **Evidência:** documentação primária de fabricantes, consórcios e artigos acadêmicos; validação estrutural e compilação se houver ferramenta disponível.
+- **Fora do escopo:** inventar autoria humana, prompts históricos ou resultados de benchmarks; modificar os slides nesta revisão do relatório.
+- [x] Revisão técnica e bibliográfica concluída; ver `pesquisa/validacao_revisao.json`.
+- [ ] Compilação e inspeção visual do PDF: pendentes, pois o compilador não está instalado e o download não foi autorizado.
+- [ ] Grupo: completar autoria individual e transcrições históricas do Post-Mortem com registros reais.
+
+### Datas de entrega
 
 | Data | O quê |
 |---|---|
@@ -50,7 +60,7 @@ escrita não é a ordem do documento** — é a ordem das dependências:
 Etapa 0   decisões metodológicas       <- trava tudo; define a profundidade da análise
    |
 Etapa 1   pesquisa bibliográfica bruta <- levanta dados dos três livros indicados
-Etapa 2   comparativos de interfaces   <- analisa DAS (SATA, eSATA, SAS, Firewire, USB, HBA)
+Etapa 2   comparativos de interfaces   <- analisa DAS (SATA, eSATA, SAS, FireWire, USB, HBA)
 Etapa 3   comparativos de RAID         <- analisa RAID padrão (0 a 6, 10) e não padrão
    |
 Etapa 4   discussões avançadas         <- performance, striping, MTTF/MTTR/MTTDL
@@ -113,7 +123,7 @@ genéricos da internet.
 
 - [ ] **2a** SATA e eSATA: arquitetura, uso, limitações.
 - [ ] **2b** SAS: diferenças de performance e confiabilidade em relação ao SATA.
-- [ ] **2c** Firewire e USB (3 e 4): cenários de uso, por que não se usa USB para banco de dados relacional de alta disponibilidade, gargalos de barramento.
+- [ ] **2c** FireWire e USB (3 e 4): cenários de uso, critérios para uso de USB em SBD e gargalos de barramento.
 - [ ] **2d** HBA (Host Bus Adapter): função, alívio de CPU e arquitetura de integração.
 
 ---

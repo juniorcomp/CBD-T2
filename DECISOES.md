@@ -114,3 +114,10 @@ originais de especificações de hardware).
 Decisão tomada fora da Etapa 0 entra aqui, numerada a partir de 1.1, com o mesmo
 formato. Toda decisão registrada aqui precisa de uma linha correspondente em
 `postmortem.md` §2 — é ali que ela conta ponto.
+
+## Revisão editorial de 10/09/2026 — execução assistida
+
+**Decisão:** explicar desempenho mecânico em HDDs, distinguir SSDs, declarar o modelo de reparo das aproximações e usar fontes primárias para interfaces e variantes.
+**Quem / quando:** Codex (IA), sob solicitação de correção do usuário — 10/09/2026. Não atribuída a um integrante.
+**Justificativa:** os erros da avaliação decorriam de generalizações e falta de documentação específica.
+**Consequência:** cálculos são identificados como exemplos; atribuições humanas e prompts históricos permanecem dependentes de registros reais.

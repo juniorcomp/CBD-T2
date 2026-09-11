@@ -7,11 +7,12 @@ https://sli.dev
 Precisa de **Node.js 20.12 ou superior**. Dentro desta pasta:
 
 ```bash
-npm ci
+npm install
 ```
 
-(`npm ci` instala as versões exatas do `package-lock.json`. Use `npm install`
-se tiver mexido no `package.json`.)
+O projeto ainda não versiona `package-lock.json`; por isso, a primeira
+instalação deve usar `npm install`. Use `npm ci` somente depois de gerar e
+versionar o arquivo de bloqueio.
 
 Isso baixa o Slidev e o Chromium usado para exportar (é o passo demorado,
 alguns minutos). Se o export reclamar de browser faltando, rode:
@@ -52,7 +53,7 @@ npm run export        # gera slides-export.pdf
 npm run export:pptx   # se precisar de PPTX (texto vira imagem)
 ```
 
-> **Não remova as flags `--per-slide --wait --wait-until` do script.**
+> **Não remova a flag `--per-slide` do script.**
 > Sem elas, o Slidev captura os slides antes do conteúdo assentar e o PDF sai
 > com o conteúdo deslocado uma página — diagramas e listas aparecem no slide
 > seguinte.
@@ -78,15 +79,14 @@ Do tema `academic`: `cover`, `intro`, `table-of-contents`, `index`, `figure`,
 Do próprio Slidev (funcionam em qualquer tema): `default`, `section`, `center`,
 `two-cols`, `two-cols-header`, `quote`, `fact`, `statement`, `end`, `none`.
 
-O layout `fact` serve bem para um número único grande — é o layout do slide do
-custo total dos 3,5 PB.
+O layout `fact` serve bem para um número único grande — neste trabalho, por
+exemplo, para destacar MTTDL ou a capacidade útil de um nível RAID.
 
 ### Componentes do tema academic
 
-`Footnotes` / `Footnote` — notas de rodapé numeradas no pé do slide. É assim que
-se cita a página de preço ou o SLA em cima do próprio slide. **Num trabalho em
-que a nota depende de fonte, todo slide com número precisa de uma.** Tem um
-exemplo no slide de camadas do Blob.
+`Footnotes` / `Footnote` — notas de rodapé numeradas no pé do slide. Use-as para
+citar livros, especificações de interfaces e documentação de fabricantes.
+**Todo slide com número ou afirmação técnica densa deve indicar sua fonte.**
 
 `Pagination` — a numeração no canto, renderizada automaticamente.
 

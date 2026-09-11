@@ -131,7 +131,7 @@ layout: section
 
 | Interface | Taxa Máx. | Duplex | Integridade | Uso típico em SBD |
 |---|---|---|---|---|
-| **SATA III** | 6 Gbps | Half | CRC Básico | Servidores de entrada |
+| **SATA 6 Gb/s** | 6 Gbps | Half | CRC de enlace | Servidores de entrada |
 | **SAS-3** | 12 Gbps | Full | T10-PI fim-a-fim | OLTP, Missão crítica |
 | **USB 3.2** | 20 Gbps | Full | CRC | Bancos embarcados |
 | **USB4 v2** | 80 Gbps | Full | CRC | Storage externo (desenv.) |
@@ -139,7 +139,7 @@ layout: section
 </div>
 
 <Footnotes separator>
-  <Footnote :number=1>Os detalhes de FileWire e eSATA estão no relatório, bem como limites exatos de comandos pendentes.</Footnote>
+  <Footnote :number=1>Os detalhes de FireWire, eSATA, USB e limites de comandos pendentes estão no relatório.</Footnote>
 </Footnotes>
 
 <!--
@@ -162,6 +162,18 @@ Recorte de colunas: mostre apenas o que define por que SAS é superior ao SATA e
 <!--
 Conexão HBA vs. SGBD: o WAL (write-ahead log) vive em harmonia com o BBU do HBA hardware.
 -->
+
+---
+
+# eSATA e FireWire: papel atual
+
+<v-clicks>
+
+- **eSATA:** extensão externa do SATA; mesma lógica de armazenamento direto, cabo curto e normalmente sem alimentação. Hoje é mais comum em legados e backup direto.
+- **FireWire (IEEE 1394):** suportava encadeamento de dispositivos e tráfego isócrono, mas está obsoleto para novos SBDs.
+- **Uso atual:** em novos SBDs de produção, ambas aparecem sobretudo como interfaces legadas.
+
+</v-clicks>
 
 ---
 layout: section
@@ -236,9 +248,56 @@ Mean Time to Data Loss
 
 Tempo médio esperado até a **perda irreversível** de dados (a métrica que tira o sono do DBA).
 
+<div class="text-sm opacity-75 pt-4">
+Os cálculos são modelos: assumem falhas independentes, taxa constante e MTTR conhecido. Não substituem backup, monitoramento ou testes de restauração.
+</div>
+
 <!--
 Não confunda com MTTF (falha de 1 disco). O MTTDL quantifica as falhas críticas simultâneas que superam a tolerância.
 -->
+
+---
+
+# Métricas: o que cada uma mede
+
+| Métrica | Pergunta que responde |
+|---|---|
+| **MTTF** | Em média, quando um componente falha? |
+| **MTTR** | Quanto tempo leva detectar, substituir e reconstruir? |
+| **MTBF** | Qual o ciclo médio entre falhas em sistema reparável? |
+| **MTTDL** | Em média, quando a redundância deixa de evitar perda de dados? |
+
+<div class="text-sm opacity-75 pt-4">
+MTTDL melhora ao reduzir MTTR, mas RAID não substitui backup testado.
+</div>
+
+---
+
+# Mirroring e Shadowing: camadas distintas
+
+<div class="grid grid-cols-2 gap-8 pt-4">
+
+<div>
+
+### Mirroring
+
+- Redundância física de dados em discos.
+- Base do RAID 1 e do RAID 10.
+- Protege contra falha de disco.
+
+</div>
+
+<div>
+
+### Shadowing / shadow paging
+
+- Técnica lógica de recuperação do SGBD.
+- Mantém estado anterior para garantir atomicidade.
+- Não substitui redundância física.
+
+</div>
+
+</div>
 
 ---
 layout: section
@@ -268,6 +327,19 @@ Esta é a consolidação das recomendações do livro do Silberschatz para proje
 
 ---
 
+# Níveis que completam a comparação
+
+<v-clicks>
+
+- **RAID 2:** striping em nível de bit com ECC/Hamming; histórico e obsoleto.
+- **RAID 3:** striping em byte com paridade dedicada; bom para I/O sequencial, ruim para concorrência.
+- **RAID 4:** striping em bloco com paridade dedicada; o disco de paridade vira gargalo de escrita.
+- **RAID 0+1 vs. RAID 10:** ambos usam 50% da capacidade; RAID 10 isola a falha no par e reconstrói apenas esse par, por isso é preferível.
+
+</v-clicks>
+
+---
+
 # Soluções Proprietárias e Aninhadas
 
 <div class="grid grid-cols-2 gap-8 pt-2">
@@ -275,8 +347,12 @@ Esta é a consolidação das recomendações do livro do Silberschatz para proje
 <div v-click>
 
 ### RAID-DP e RAID-S
-- **DP (NetApp):** Dupla paridade sem a sobrecarga aleatória graças à tecnologia WAFL de alocação de logs.
-- **RAID-S (EMC):** Paridade corporativa delegada por cache NVRAM.
+- **DP (NetApp):** Dupla paridade e tolerância a duas falhas; implementação e dimensionamento são específicos do ONTAP.
+- **RAID-S (EMC/Symmetrix):** Tecnologia proprietária histórica baseada em volumes de dados e paridade; sua semântica é específica da plataforma.
+
+### Outros exemplos
+- **RAID 1.5 e RAID 7:** nomes proprietários; exigem documentação da controladora, não equivalências genéricas.
+- **Matrix RAID (Intel):** até dois volumes RAID sobre os mesmos discos; a falha física continua compartilhada.
 
 </div>
 
@@ -307,8 +383,8 @@ layout: section
 <v-clicks>
 
 - O modelo ideal de \textit{storage} mescla HDDs, SSDs e NVMe alinhados à criticidade.
-- A configuração **depende da carga**: OLAP favorece RAID 5 (espaço eficiente), enquanto OLTP depende de RAID 10 (IOPS puro).
-- O Gargalo de Rebuild: Discos modernos gigantes geram um \textit{MTTR} perigoso (dias de reconstrução) — evite RAID 5 com HDDs enormes.
+- A configuração **depende da carga**: em OLAP de leitura intensa, RAID 5 pode privilegiar espaço; em OLTP com escrita intensa, RAID 10 costuma oferecer latência mais previsível.
+- O gargalo de \textit{rebuild}: discos grandes podem ampliar o MTTR. Avalie RAID 6 ou RAID 10 conforme carga, risco e objetivo de recuperação.
 
 </v-clicks>
 
@@ -320,7 +396,8 @@ layout: section
 
 - **Agilidade:** Conversão maciça de anotações soltas para prosa coesa usando Claude/Gemini.
 - **O perigo conceitual:** A IA confundiu "Shadowing" de hardware com "Shadow Paging" (mecanismo lógico do próprio SGBD para Atomicidade).
-- **Intervenção Humana:** A revisão e validação com literatura acadêmica rigorosa (Elmasri e Silberschatz) continua insubstituível.
+- **Outras correções:** regras universais de RAID 2 e detalhes não documentados de RAID-DP/RAID-S foram removidos ou qualificados.
+- **Intervenção Humana:** a revisão contra Elmasri, Silberschatz, documentação NetApp, Intel, USB-IF e SATA-IO foi indispensável.
 
 </v-clicks>
 

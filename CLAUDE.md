@@ -18,7 +18,7 @@ Trabalho acadêmico (UFRJ, Construção de Bancos de Dados). O enunciado encoraj
 
 ## Armadilhas específicas deste tema (DAS e RAID)
 - **RAID proprietários**: Níveis como 1.5, 7, Matrix. Modelos de IA costumam alucinar com facilidade essas especificações. Checar rigorosamente nos livros.
-- **Interfaces**: Garantir a distinção entre o que é usado para DAS puramente e o que cai em SAN/NAS. (SATA, SAS, USB, Firewire, HBA).
+- **Interfaces**: Garantir a distinção entre o que é usado para DAS puramente e o que cai em SAN/NAS. (SATA, SAS, USB, FireWire, HBA).
 - **Conceitos de Confiabilidade**: Mean time to repair, mean time to data loss, MTTF e MTBF. IA costuma confundir as fórmulas matemáticas por trás desses termos ou aplicar valores teóricos como se fossem práticos.
 - Aritmética e desempenho: conferir a conta e as fórmulas de redundância do RAID, não estimar de cabeça.
 
