@@ -71,7 +71,7 @@ DAS, Interfaces e Níveis de RAID
 
 Daniel Rebouças de Sousa Barros — DRE 123273542<br />
 Hugo Leandro Antunes — DRE 123143543<br />
-Jeson Wen Chen — DRE 123051883<br />
+Jeson Wen Chen — DRE 123051893<br />
 João Batista Brasil Junior — DRE 121091172<br />
 Pedro Cintra Silveira — DRE 123419342
 

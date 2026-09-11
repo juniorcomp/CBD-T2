@@ -28,7 +28,7 @@
 |---|---|---|
 | Daniel Rebouças de Sousa Barros — DRE 123273542 | Interfaces DAS e revisão de fontes técnicas para SATA, eSATA, SAS, FireWire, USB e HBA. | Priorizou documentação técnica para dados atuais de interface, pois os livros-base não cobrem todos os padrões recentes. |
 | Hugo Leandro Antunes — DRE 123143543 | RAID 0--4, striping e blocos de paridade. | Organizou a explicação por granularidade de distribuição, para relacionar arquitetura, paralelismo e gargalos de escrita. |
-| Jeson Wen Chen — DRE 123051883 | RAID 5/6 e métricas MTTF, MTTR, MTBF e MTTDL. | Explicitou as hipóteses das fórmulas e evitou limiar universal para recomendar RAID 6. |
+| Jeson Wen Chen — DRE 123051893 | RAID 5/6 e métricas MTTF, MTTR, MTBF e MTTDL. | Explicitou as hipóteses das fórmulas e evitou limiar universal para recomendar RAID 6. |
 | João Batista Brasil Junior — DRE 121091172 | RAID 0+1/10, RAID não padrão e comparação de aplicações em SBD. | Diferenciou níveis compostos e qualificou implementações proprietárias conforme a documentação disponível. |
 | Pedro Cintra Silveira — DRE 123419342 | Integração do LaTeX, slides, referências e revisão final de coerência. | Manteve consistência entre o relatório, os slides e o checklist de entrega. |
 
