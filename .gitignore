@@ -14,3 +14,4 @@ dist/
 *.synctex.gz
 *.pdf
 !main.pdf
+!slides/slides-export.pdf

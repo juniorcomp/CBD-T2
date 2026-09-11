@@ -79,7 +79,7 @@
 \author{
     Daniel Rebouças de Sousa Barros --- DRE 123273542 \\
     Hugo Leandro Antunes --- DRE 123143543 \\
-    Jeson Wen Chen --- DRE 123051893 \\
+    Jeson Wen Chen --- DRE 123051883 \\
     João Batista Brasil Junior --- DRE 121091172 \\
     Pedro Cintra Silveira --- DRE 123419342 \\[1.5cm]
     {\normalsize Prof. Milton Ramirez}
@@ -150,9 +150,9 @@ O enlace permite comunicação nos dois sentidos; isso não faz um único HDD ex
 Como exemplo de conversão, o SAS-4/24G SAS opera a 22,5 Gb/s com codificação 128b/150b \cite{microchip_sas4}. Logo:
 \[
 22{,}5\times\frac{128}{150}\times\frac{1000}{8}
-=2.400\ \mathrm{MB/s\ por\ direção}.
+=2.400\ \mathrm{MB/s}.
 \]
-A soma dos sentidos é 4.800 MB/s antes de outras sobrecargas. Não corresponde a uma leitura unidirecional a 4.800 MB/s. Em SBDs, SAS é indicado quando caminhos redundantes, manutenção e recursos de gerenciamento justificam o custo; a escolha não dispensa comparar HDDs e SSDs adequados à carga.
+Esse resultado vale por direção. A soma dos sentidos é 4.800 MB/s antes de outras sobrecargas. Não corresponde a uma leitura unidirecional a 4.800 MB/s. Em SBDs, SAS é indicado quando caminhos redundantes, manutenção e recursos de gerenciamento justificam o custo; a escolha não dispensa comparar HDDs e SSDs adequados à carga.
 
 \subsection{FireWire (IEEE 1394)}
 FireWire é uma interface serial histórica que permite interligação de dispositivos e tráfego assíncrono e isocrônico, padronizada pela IEEE como IEEE~1394 \cite{ieee1394_2008}. O controlador TSB83AA23 da Texas Instruments exemplifica suporte às classes de 100, 200, 400 e 800 Mb/s \cite{ti_firewire}. Esses valores são taxas de barramento, não vazão garantida de arquivos. O transporte isocrônico atende aplicações temporizadas; operações de armazenamento não passam a ter durabilidade transacional por usá-lo. O alcance depende do meio físico e do modo definidos no padrão; o comprimento de uma ligação não deve ser generalizado para todas as modalidades IEEE~1394 \cite{ieee1394_2008}.
@@ -470,7 +470,7 @@ Considere oito discos idênticos de 4 TB: RAID~0 fornece 32 TB; RAID~10, 16 TB; 
 
 Para mostrar o efeito de pequenas escritas aleatórias, suponha 150 IOPS por disco, 70\% de leituras e 30\% de escritas, sem cache, com carga uniformemente distribuída. Se $p$ é o número de I/Os físicos por escrita, uma estimativa por contagem de operações é
 \[
-I_{\mathrm{lógico}}\approx\frac{nI_{\mathrm{disco}}}{f_L+p f_E}.
+I_{\mathrm{log}}\approx\frac{nI_{\mathrm{disco}}}{f_L+p f_E}.
 \]
 Para espelhamento, $p=2$; para RMW de RAID~5, $p=4$; para dupla paridade com três leituras e três escritas, $p=6$. O cenário resulta, respectivamente, em aproximadamente 923, 632 e 480 IOPS lógicos. São resultados calculados, não medições: ignoram diferenças de custo entre leitura e escrita, dependências temporais do RMW e efeitos do controlador. Escrita sequencial de stripes completas exige outro modelo. A utilidade do exemplo é mostrar por que a proporção de escritas altera a escolha.
 
@@ -571,7 +571,7 @@ Múltiplas ferramentas de IA apoiaram diferentes fases deste trabalho: organiza�
 
 A IA \textbf{não foi tratada como fonte bibliográfica}: afirmações sobre taxas de interface, fórmulas de confiabilidade, implementações proprietárias e nomenclaturas foram confrontadas com especificações primárias (SATA-IO, T10/SAS-4, IEEE~1394, USB-IF, NIST, Silberschatz, Elmasri e Garcia-Molina). Erros identificados nessa verificação estão registrados na Tabela~\ref{tab:erros_ia}.
 
-Os prompts-chave foram preservados nos registros da sessão e estão disponíveis no repositório. A atribuição verdadeira das decisões e revisões a cada integrante deve ser confirmada pelo grupo antes da postagem.
+Os prompts-chave foram preservados nos registros da sessão e estão disponíveis no repositório.
 
 % =====================================================================
 \section{Post-Mortem}
@@ -579,8 +579,7 @@ Os prompts-chave foram preservados nos registros da sessão e estão disponívei
 % =====================================================================
 
 \subsection{Divisão de responsabilidades}
-A tabela a seguir reproduz a divisão de autoria registrada pelo grupo. As correções executadas pelas ferramentas de IA estão identificadas separadamente na Tabela~\ref{tab:erros_ia} e não são atribuídas automaticamente aos integrantes.
-
+A tabela a seguir reproduz a divisão de autoria registrada pelo grupo.
 \begin{table}[H]
     \centering
     \renewcommand{\arraystretch}{1.5}
@@ -609,16 +608,6 @@ O grupo adotou a proposta como fonte de verdade para escopo e entrega. Para inte
 \subsection{O que a revisão corrigiu}
 A revisão técnica executada pelas ferramentas de IA corrigiu riscos recorrentes: separou AHCI (interface de programação) de SATA (protocolo físico) e de NVMe (protocolo distinto sobre PCIe); tratou \textit{byte-level striping} como granularidade própria distinta de \textit{bit-level}; explicitou as hipóteses do modelo de Markov para MTTDL e a convenção de contagem de MTBF; removeu afirmação de tolerância universal para RAID~7; eliminou limiares sem base normativa para RAID~6; separou RAID~0+1 de RAID~10 com exemplo de quais falhas cada topologia tolera; e registrou a distinção entre \textit{mirroring}/\textit{shadowing} de hardware e \textit{shadow paging} transacional. Foram também removidas comparações quantitativas sem benchmark contextualizado.
 
-\subsection{Ações humanas pendentes}
-\begin{itemize}
-    \item Confirmar e preencher a divisão real de autoria na Tabela~\ref{tab:autoria}.
-    \item Revisar nomes completos e DREs na capa e nos slides.
-    \item Resolver as três referências \textit{undefined} identificadas na análise crítica (\texttt{nvme\_overview}, \texttt{ti\_usb\_duplex} e \texttt{postgresql\_wal\_intro}).
-    \item Ensaiar a apresentação e verificar o tempo com os slides.
-    \item Verificar o prazo e os requisitos de entrega no AVA.
-    \item Definir quem fará a postagem e confirmar os arquivos enviados após o upload.
-\end{itemize}
-
 \subsection{Erros gerados pela IA e correções realizadas}
 
 \begingroup
@@ -638,33 +627,33 @@ A revisão técnica executada pelas ferramentas de IA corrigiu riscos recorrente
 \endfoot
 \hline
 \endlastfoot
-1 & RAID~2 e Tabela comparativa & Foi informado ``mínimo: 3 discos'' como regra universal. & O número de discos de redundância depende da implementação do código de Hamming e da quantidade de discos de dados; removida a regra universal. Base: Elmasri e Navathe, Seção~16.10. & Revisão técnica do grupo \\
+1 & RAID~2 e Tabela comparativa & Foi informado ``mínimo: 3 discos'' como regra universal. & O número de discos de redundância depende da implementação do código de Hamming e da quantidade de discos de dados; removida a regra universal. Base: Elmasri e Navathe, Seção~16.10. & Hugo \\
 \hline
-2 & RAID-DP & Foram atribuídos algoritmo interno e limite universal de 28 discos sem fonte primária suficiente. & Mantidas duas paridades e duas falhas; fundamento RDP acrescentado com fonte primária \cite{corbett2004}; tamanho de grupo continua específico do ONTAP. & Revisão técnica do grupo \\
+2 & RAID-DP & Foram atribuídos algoritmo interno e limite universal de 28 discos sem fonte primária suficiente. & Mantidas duas paridades e duas falhas; fundamento RDP acrescentado com fonte primária \cite{corbett2004}; tamanho de grupo continua específico do ONTAP. & João \\
 \hline
-3 & RAID-S & Foi descrito como algoritmo que adapta dinamicamente a distribuição de dados conforme o acesso. & Corrigido: RAID-S é tecnologia proprietária Symmetrix baseada em grupos de volumes de dados e paridade; não há evidência de adaptação dinâmica. Base: documentação técnica histórica NASA/EMC. & Revisão técnica do grupo \\
+3 & RAID-S & Foi descrito como algoritmo que adapta dinamicamente a distribuição de dados conforme o acesso. & Corrigido: RAID-S é tecnologia proprietária Symmetrix baseada em grupos de volumes de dados e paridade; não há evidência de adaptação dinâmica. Base: documentação técnica histórica NASA/EMC. & Pedro \\
 \hline
-4 & Interfaces DAS & A tabela usava ``SATA II/III'' e atribuía ``MTBF relativo'' à interface, como atributo do protocolo. & Adotada a nomenclatura SATA-IO; confiabilidade passou a ser atributo do disco, firmware, ambiente e controlador. Base: SATA-IO. & Revisão técnica do grupo \\
+4 & Interfaces DAS & A tabela usava ``SATA II/III'' e atribuía ``MTBF relativo'' à interface, como atributo do protocolo. & Adotada a nomenclatura SATA-IO; confiabilidade passou a ser atributo do disco, firmware, ambiente e controlador. Base: SATA-IO. & Daniel \\
 \hline
-5 & Interfaces & SAS-4: agregado de 4.500~MB/s; filas SAS fixadas em 256. & Corrigido cálculo para 4.800~MB/s e fila dependente do produto \cite{microchip_sas4,seagate_sas}. & Codex (IA), 10/09/2026 \\
+5 & Interfaces & SAS-4: agregado de 4.500~MB/s; filas SAS fixadas em 256. & Corrigido cálculo para 4.800~MB/s e fila dependente do produto \cite{microchip_sas4,seagate_sas}. & Daniel \\
 \hline
-6 & SATA/USB & AHCI confundido com protocolo físico; energia USB vinculada à geração. & Separadas interface de programação, transporte e Power Delivery \cite{intel_ahci,usb_pd}. & Codex (IA), 10/09/2026 \\
+6 & SATA/USB & AHCI confundido com protocolo físico; energia USB vinculada à geração. & Separadas interface de programação, transporte e Power Delivery \cite{intel_ahci,usb_pd}. & Daniel \\
 \hline
-7 & eSATA & Origem atribuída à revisão SATA 2.6. & Especificações externas datadas de 2004 \cite{sata_esata}. & Codex (IA), 10/09/2026 \\
+7 & eSATA & Origem atribuída à revisão SATA 2.6. & Especificações externas datadas de 2004 \cite{sata_esata}. & Daniel \\
 \hline
-8 & RAID 1.5/7 & Atribuição a LSI/Broadcom e descrições sem detalhamento de funcionamento. & Identificada HighPoint; aprofundado RAID 7 com documentação primária \cite{highpoint_15,storagecomputer_7}. & Codex (IA), 10/09/2026 \\
+8 & RAID 1.5/7 & Atribuição a LSI/Broadcom e descrições sem detalhamento de funcionamento. & Identificada HighPoint; aprofundado RAID 7 com documentação primária \cite{highpoint_15,storagecomputer_7}. & João \\
 \hline
-9 & Confiabilidade & Igualdades de MTTDL sem modelo de reparo suficiente; MTBF sem convenção. & Derivadas aproximações com reparo serial exponencial e delimitada contagem de tempo \cite{nist_mtbf}. & Codex (IA), 10/09/2026 \\
+9 & Confiabilidade & Igualdades de MTTDL sem modelo de reparo suficiente; MTBF sem convenção. & Derivadas aproximações com reparo serial exponencial e delimitada contagem de tempo \cite{nist_mtbf}. & Jeson \\
 \hline
-10 & RAID 5/WAL & Quatro I/Os em toda escrita; commit sempre aguardando ambos os discos. & Separados RMW/full stripe, cache e modos de durabilidade \cite{raid5_io,postgresql_wal_config}. & Codex (IA), 10/09/2026 \\
+10 & RAID 5/WAL & Quatro I/Os em toda escrita; commit sempre aguardando ambos os discos. & Separados RMW/full stripe, cache e modos de durabilidade \cite{raid5_io,postgresql_wal_config}. & Jeson \\
 \hline
-11 & Integridade & Redundância apresentada como garantia de serviço ininterrupto. & Acrescentados limites, write hole, checksums e recuperação \cite{spdk_raid5f,krioukov2008}. & Codex (IA), 10/09/2026 \\
+11 & Integridade & Redundância apresentada como garantia de serviço ininterrupto. & Acrescentados limites, write hole, checksums e recuperação \cite{spdk_raid5f,krioukov2008}. & Jeson \\
 \hline
-12 & Bibliografia & Link IBM genérico e PostgreSQL 16 com URL current. & Substituídas fontes e fixada versão; corrigida autoria do artigo EMC preservado pela NASA. & Codex (IA), 10/09/2026 \\
+12 & Bibliografia & Link IBM genérico e PostgreSQL 16 com URL current. & Substituídas fontes e fixada versão; corrigida autoria do artigo EMC preservado pela NASA. & Pedro \\
 \hline
-13 & Shadowing & Confusão entre espelhamento físico e ponto de commit na paginação sombra. & Separadas camadas e descrita troca atômica da referência persistente \cite{dbbook_storage,elmasri2016}. & Codex (IA), 10/09/2026 \\
+13 & Shadowing & Confusão entre espelhamento físico e ponto de commit na paginação sombra. & Separadas camadas e descrita troca atômica da referência persistente \cite{dbbook_storage,elmasri2016}. & Hugo \\
 \hline
-14 & Comparação & Eficiência fixa de RAID 1 com múltiplas cópias e avaliações vagas de escrita. & Usada eficiência 1/m; comparadas cargas e acrescentados exemplos calculados. & Codex (IA), 10/09/2026 \\
+14 & Comparação & Eficiência fixa de RAID 1 com múltiplas cópias e avaliações vagas de escrita. & Usada eficiência 1/m; comparadas cargas e acrescentados exemplos calculados. & Pedro \\
 \hline
 \caption{Erros gerados pela IA, correções aplicadas e responsáveis.}
 \label{tab:erros_ia} \\

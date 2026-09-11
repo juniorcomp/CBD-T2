@@ -305,9 +305,10 @@ layout: default
 
 # RAID 4 vs. RAID 5: o gargalo de paridade
 
-```mermaid {scale: 0.62}
+```mermaid {scale: 0.48}
 flowchart LR
   subgraph RAID4["RAID 4 — paridade dedicada"]
+    direction LR
     W[Small write] --> R1[1 Lê dado antigo]
     R1 --> R2[2 Lê paridade antiga]
     R2 --> C[3 Calcula P_novo = P ⊕ D_ant ⊕ D_nov]
@@ -317,7 +318,7 @@ flowchart LR
   end
 ```
 
-<div class="two-cols mt-4 compact">
+<div class="two-cols mt-2 compact">
 <div>
 
 **RAID 4 → 4 I/Os físicos por small write**<br />
@@ -340,23 +341,22 @@ Na stripe $k$, paridade no disco $(k \bmod n)$ → contenção balanceada entre 
 
 ---
 layout: default
+class: compact-raid10
 ---
 
 # RAID 0+1 vs. RAID 10: tolerância real
 
-```mermaid {scale: 0.60}
+```mermaid {scale: 0.38}
 flowchart LR
-  subgraph R01["RAID 0+1"]
-    direction TB
-    G1["Stripe A+B"] -->|espelho| G2["Stripe C+D"]
-  end
-  subgraph R10["RAID 10"]
-    direction TB
-    P1["Par A↔B"] & P2["Par C↔D"] --> stripe["Stripe dos pares"]
-  end
+  A["RAID 0+1"] --> G1["Stripe A+B"]
+  G1 -->|espelho| G2["Stripe C+D"]
+  B["RAID 10"] --> P1["Par A↔B"]
+  B --> P2["Par C↔D"]
+  P1 --> S["Stripe dos pares"]
+  P2 --> S
 ```
 
-<div class="two-cols mt-5 compact">
+<div class="two-cols mt-2 compact">
 <div>
 
 **RAID 0+1**<br />
@@ -374,7 +374,7 @@ Perder C → apenas par (C,D) degradado.<br />
 </div>
 </div>
 
-<div class="takeaway small">RAID 10 tolera até $n/2$ falhas <em>desde que não sejam no mesmo par</em>. Reconstrução localizada: só o par afetado é reconstruído.</div>
+<div class="takeaway small">RAID 10 tolera até n/2 falhas <em>desde que não sejam no mesmo par</em>. Reconstrução localizada: só o par afetado é reconstruído.</div>
 
 <div class="source">Silberschatz (2020) §12.5; Garcia-Molina (2009) §13.4</div>
 
@@ -507,6 +507,7 @@ layout: default
 
 ---
 layout: end
+class: conclusion-final
 ---
 
 # Conclusão
@@ -518,13 +519,3 @@ layout: end
 - **RAID 5 / 6** aproveitam melhor a capacidade; RAID 6 suporta uma falha adicional ao custo de escrita.
 - **RAID 0** restrito a dados descartáveis — MTTDL menor que um disco isolado.
 - **Nenhum nível RAID substitui backup independente testado.**
-
-<div class="debate mt-8">
-Pergunta para o debate: qual falha a sua arquitetura consegue suportar — e em quanto tempo você confirma isso com um restore?
-</div>
-
-<div class="pt-5 text-xs opacity-60">
-Relatório, referências e Post-Mortem disponíveis no repositório do projeto.
-</div>
-
-<!-- Encerrar relacionando a resposta a MTTR, MTTDL, latência de cauda em modo degradado e restore testado. -->

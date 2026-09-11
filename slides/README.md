@@ -6,13 +6,13 @@ https://sli.dev
 
 Precisa de **Node.js 20.12 ou superior**. Dentro desta pasta:
 
-```bash
-npm install
+```powershell
+npm.cmd ci
 ```
 
-O projeto ainda não versiona `package-lock.json`; por isso, a primeira
-instalação deve usar `npm install`. Use `npm ci` somente depois de gerar e
-versionar o arquivo de bloqueio.
+O projeto versiona `package-lock.json`; por isso, `npm.cmd ci` reproduz as
+versões testadas. No PowerShell, prefira `npm.cmd` para evitar que a política
+de execução do Windows bloqueie o arquivo `npm.ps1`.
 
 Isso baixa o Slidev e o Chromium usado para exportar (é o passo demorado,
 alguns minutos). Se o export reclamar de browser faltando, rode:
@@ -23,8 +23,8 @@ npx playwright install chromium
 
 ## Rodar
 
-```bash
-npm run dev
+```powershell
+npm.cmd run dev
 ```
 
 Abre em `http://localhost:3030`. O navegador atualiza sozinho conforme você
@@ -48,9 +48,9 @@ reserva que não couberam no slide.
 
 ## Exportar
 
-```bash
-npm run export        # gera slides-export.pdf
-npm run export:pptx   # se precisar de PPTX (texto vira imagem)
+```powershell
+npm.cmd run export        # gera slides-export.pdf
+npm.cmd run export:pptx   # se precisar de PPTX (texto vira imagem)
 ```
 
 > **Não remova a flag `--per-slide` do script.**
