@@ -564,24 +564,31 @@ O projeto de DAS para um SBD começa pela carga: latência de commit, proporçã
 
 RAID~10 é um candidato para escrita aleatória intensa, ao custo de metade da capacidade na configuração com duas cópias. RAID~5 e RAID~6 aproveitam melhor a capacidade, mas exigem avaliar atualização de paridade e operação degradada; RAID~6 suporta uma falha adicional. RAID~0 é restrito, nesta recomendação, a conteúdo recuperável por outra origem. A decisão final deve usar medições representativas e exercícios de restauração. Os modelos de MTTDL explicam tendências, enquanto backup, integridade e disponibilidade do serviço tratam riscos que o nível RAID isolado não cobre.
 
-\section{Considerações e dúvidas em aberto}
-Uma avaliação experimental complementar deve medir latência de commit, IOPS e vazão em operação normal e durante rebuild, registrando mídia, cache, tamanho de I/O e concorrência. Também deve testar a restauração de backup e a detecção de erros latentes. O presente estudo não realizou esses benchmarks; seus exemplos são analíticos. Para equipamentos proprietários históricos, a disponibilidade de documentação não assegura suporte atual ou possibilidade de recuperar um array em outra controladora.
+% =====================================================================
+\section{Autoria e uso de IA}
+% =====================================================================
+Múltiplas ferramentas de IA apoiaram diferentes fases deste trabalho: organização de rascunhos, pesquisa de fontes, redação, expansão técnica, geração de artefatos \LaTeX{} e revisão crítica dos critérios do enunciado. As ferramentas declaradas nos registros do grupo incluem GPT-5.6 Terra, Gemini~3.1, Claude Sonnet e Antigravity; nem todos os prompts têm responsável individual confirmado.
 
+A IA \textbf{não foi tratada como fonte bibliográfica}: afirmações sobre taxas de interface, fórmulas de confiabilidade, implementações proprietárias e nomenclaturas foram confrontadas com especificações primárias (SATA-IO, T10/SAS-4, IEEE~1394, USB-IF, NIST, Silberschatz, Elmasri e Garcia-Molina). Erros identificados nessa verificação estão registrados na Tabela~\ref{tab:erros_ia}.
+
+Os prompts-chave foram preservados nos registros da sessão e estão disponíveis no repositório. A atribuição verdadeira das decisões e revisões a cada integrante deve ser confirmada pelo grupo antes da postagem.
+
+% =====================================================================
 \section{Post-Mortem}
 \label{sec:postmortem}
 % =====================================================================
 
-\subsection{Divisão de responsabilidades e autoria}
-A tabela a seguir reproduz a divisão registrada anteriormente pelo grupo. Ela não atribui aos integrantes as alterações executadas pela IA nesta revisão; essas alterações são identificadas separadamente abaixo.
+\subsection{Divisão de responsabilidades}
+A tabela a seguir reproduz a divisão de autoria registrada pelo grupo. As correções executadas pelas ferramentas de IA estão identificadas separadamente na Tabela~\ref{tab:erros_ia} e não são atribuídas automaticamente aos integrantes.
 
 \begin{table}[H]
     \centering
     \renewcommand{\arraystretch}{1.5}
     \begin{tabularx}{\textwidth}{|l|X|}
         \hline
-        \textbf{Integrante} & \textbf{Responsabilidades, decisões tomadas e justificativa} \\
+        \textbf{Integrante} & \textbf{Responsabilidades e decisões} \\
         \hline
-        Daniel R. S. Barros & Interfaces DAS e revisão de fontes técnicas para SATA, eSATA, SAS, FireWire, USB e HBA. Priorizou documentação técnica para dados atuais de interface. \\
+        Daniel R. S. Barros & Interfaces DAS: SATA, eSATA, SAS, FireWire, USB e HBA. Priorizou documentação técnica primária para dados de interface. \\
         \hline
         Hugo Leandro Antunes & RAID~0--4, \textit{striping} e blocos de paridade. Organizou a explicação por granularidade de distribuição, relacionando arquitetura, paralelismo e gargalos de escrita. \\
         \hline
@@ -592,63 +599,26 @@ A tabela a seguir reproduz a divisão registrada anteriormente pelo grupo. Ela n
         Pedro Cintra Silveira & Integração do \LaTeX{}, slides, referências e revisão final de coerência. Manteve consistência entre relatório, slides e checklist de entrega. \\
         \hline
     \end{tabularx}
-    \caption{Divisão de responsabilidades entre os integrantes do grupo.}
+    \caption{Divisão de responsabilidades entre os integrantes.}
     \label{tab:autoria}
 \end{table}
 
 \subsection{Decisões do grupo}
-O grupo adotou a proposta como fonte de verdade para escopo e entrega. Para interfaces atuais e RAID proprietário, decidiu usar documentação oficial ou explicitar a limitação da fonte; também decidiu não usar limiar universal de número de discos para recomendar RAID~6, pois a escolha depende de MTTR, capacidade, carga, criticidade e risco operacional. O responsável individual por cada decisão deve ser confirmado pelos integrantes antes da entrega.
+O grupo adotou a proposta como fonte de verdade para escopo e entrega. Para interfaces atuais e RAID proprietário, decidiu usar documentação oficial ou explicitar a limitação da fonte. Decidiu também não aplicar limiar universal de número de discos para recomendar RAID~6 --- a escolha depende de MTTR, capacidade, carga, criticidade e risco operacional, conforme discutido nas equações de MTTDL.
 
-\subsection{Ferramentas de IA utilizadas}
-Os registros anteriores declaram GPT-5.6 Terra, Gemini~3.1 e Claude Sonnet, além da grafia ``Claude Optus~4.6'', cuja denominação não foi confirmada. A revisão técnica desta sessão foi executada com Codex, por solicitação do usuário, com consulta a fontes externas. Não foi inferida a identidade do integrante que enviou os prompts.
+\subsection{O que a revisão corrigiu}
+A revisão técnica executada pelas ferramentas de IA corrigiu riscos recorrentes: separou AHCI (interface de programação) de SATA (protocolo físico) e de NVMe (protocolo distinto sobre PCIe); tratou \textit{byte-level striping} como granularidade própria distinta de \textit{bit-level}; explicitou as hipóteses do modelo de Markov para MTTDL e a convenção de contagem de MTBF; removeu afirmação de tolerância universal para RAID~7; eliminou limiares sem base normativa para RAID~6; separou RAID~0+1 de RAID~10 com exemplo de quais falhas cada topologia tolera; e registrou a distinção entre \textit{mirroring}/\textit{shadowing} de hardware e \textit{shadow paging} transacional. Foram também removidas comparações quantitativas sem benchmark contextualizado.
 
-\subsection{Log dos prompts-chave}
-
-\subsubsection{Prompt 1}
-\begin{lstlisting}[language=,caption={Prompt utilizado para estrutura inicial e tópico 1.}]
-Fazendo uma analise e buscando quais sao os pontos que faltam para a
-realizacao da tarefa, coloque um checklist de tarefas no README.
-\end{lstlisting}
-
-\noindent\textbf{Resposta obtida:} checklist de entrega e estrutura inicial da proposta.
-
-\medskip
-\noindent\textbf{Uso pelo grupo:} o checklist passou a orientar o controle dos produtos obrigatórios.
-
-\subsubsection{Prompts 2 a 4 — registros resumidos}
+\subsection{Ações humanas pendentes}
 \begin{itemize}
-    \item \textbf{Fluxo de redação e revisão:} gerar uma subseção em \LaTeX{} por vez a partir da bibliografia fornecida e corrigir erros técnicos, de formatação ou prolixidade apontados pelo grupo.
-    \item \textbf{Estrutura do estudo DAS e RAID:} produzir rascunho em Markdown para interfaces, desempenho, confiabilidade, striping e RAID padrão e não padrão.
-    \item \textbf{Auditoria de coerência:} confrontar proposta.md e readme.md quanto a escopo, precisão técnica, clareza e lacunas.
+    \item Confirmar e preencher a divisão real de autoria na Tabela~\ref{tab:autoria}.
+    \item Revisar nomes completos e DREs na capa e nos slides.
+    \item Resolver as três referências \textit{undefined} identificadas na análise crítica (\texttt{nvme\_overview}, \texttt{ti\_usb\_duplex} e \texttt{postgresql\_wal\_intro}).
+    \item Ensaiar a apresentação e verificar o tempo com os slides.
+    \item Verificar o prazo e os requisitos de entrega no AVA.
+    \item Definir quem fará a postagem e confirmar os arquivos enviados após o upload.
 \end{itemize}
-\noindent Estes itens são resumos históricos, não transcrições literais. Datas, responsáveis individuais e ferramenta de cada prompt não estão integralmente documentados; o quarto prompt foi registrado como executado com GPT-5.6 Terra.
 
-
-\subsubsection{Prompt da revisão técnica desta sessão}
-\noindent\textbf{Data de registro:} 10/09/2026. \textbf{Ferramenta:} Codex. \textbf{Solicitante:} usuário da sessão, sem atribuição individual confirmada.
-\begin{quote}\small
-``Faça correções todas as necessaárias. Posteriromente, melhore necessário use fonte externas também e as coloque referenciada no refbib e no final do maintext''
-\end{quote}
-\noindent\textbf{Contexto:} pedido posterior a uma avaliação crítica do relatório frente aos critérios de DAS e RAID. A grafia do prompt foi preservada.
-
-\noindent\textbf{Resultado produzido pela IA:} revisão de interfaces, modelos de confiabilidade, comparação de RAID, variantes proprietárias, limitações de integridade e referências. Os exemplos quantitativos foram identificados como cálculos próprios; nenhuma medição foi inventada. A autoria humana das decisões anteriores continua dependendo dos registros do grupo.
-
-\subsubsection{Decisões editoriais executadas nesta revisão (10/09/2026 — Codex)}
-A IA adotou fontes primárias para especificações, um modelo de reparo serial explicitamente delimitado para MTTDL e exemplos de carga sem aparência de benchmark. A consulta a manuais históricos permitiu aprofundar RAID~1.5 e RAID-S. Essas decisões implementam o pedido de correção do usuário e não são apresentadas como decisões individuais dos integrantes.
-
-\subsubsection{Prompt da revisão crítica e correção (11/09/2026 — Antigravity)}
-\noindent\textbf{Data de registro:} 11/09/2026. \textbf{Ferramenta:} Antigravity (Claude Sonnet). \textbf{Solicitante:} usuário da sessão.
-\begin{quote}\small
-``Sabendo que você é o professor, analise esse documento segundo os critérios, veja se atende. Seja crítico e rigoroso. Faça as correções necessárias e se preciso aponte as outras fontes que seriam importantes.''
-\end{quote}
-\noindent\textbf{Resultado produzido pela IA:} análise crítica por critério do enunciado; oito correções aplicadas ao \texttt{main.tex}; três referências adicionadas ao \texttt{ref.bib} (IEEE~1394-2008, SAS-4 T10, SATA Rev.~3.5a). Lacunas identificadas: \textit{byte-level striping} ausente da seção de striping; tabela DAS rasa; ausência de seção DAS$\leftrightarrow$RAID; sem tabela comparativa dos RAID não padrão; MTTDL sem definição introdutória; MTBF sem equação explícita; RAID~4 sem detalhe RMW; terminologia mirroring/shadowing ambígua. Todas as correções de alta prioridade foram aplicadas nesta sessão.
-
-\newpage
-\subsubsection{Correção após parecer crítico (11/09/2026 --- Codex)}
-\begin{quote}
-Faça as corrções necessárias pfvr
-\end{quote}
-Foram corrigidas a sensibilidade de MTTDL ao MTTR, a convenção de MTBF, as distinções SATA/AHCI/NVMe, o duplex USB e os cabos USB4, a granularidade de RAID~2, a notação Matrix e a tolerância não especificada de RAID~7. A tabela de aplicação passou a separar WAL sequencial de atualizações de dados OLTP e a evitar limiares universais de RAID~6. Foram acrescentados um exemplo de reconstrução XOR e limites de desempenho em modo degradado. Este registro descreve alterações da IA, sem atribuí-las a integrantes do grupo.
 \subsection{Erros gerados pela IA e correções realizadas}
 
 \begingroup
@@ -668,21 +638,21 @@ Foram corrigidas a sensibilidade de MTTDL ao MTTR, a convenção de MTBF, as dis
 \endfoot
 \hline
 \endlastfoot
-1 & RAID~2 e Tabela~\ref{tab:raid_comparativo} & Foi informado ``mínimo: 3 discos'' como regra universal. & O número de discos de redundância depende da implementação do código de Hamming e da quantidade de discos de dados; removida a regra universal. Base: Elmasri e Navathe, Seção~16.10, p.~587. & Revisão técnica do grupo (confirmar responsável) \\
+1 & RAID~2 e Tabela comparativa & Foi informado ``mínimo: 3 discos'' como regra universal. & O número de discos de redundância depende da implementação do código de Hamming e da quantidade de discos de dados; removida a regra universal. Base: Elmasri e Navathe, Seção~16.10. & Revisão técnica do grupo \\
 \hline
-2 & RAID-DP & Foram atribuídos algoritmo interno e limite universal de 28 discos sem fonte primária suficiente. & Na revisão anterior, mantidas duas paridades e duas falhas. Nesta sessão, o fundamento RDP foi acrescentado com fonte primária \cite{corbett2004}; tamanho de grupo continua específico do ONTAP. & Revisão técnica do grupo (confirmar responsável) \\
+2 & RAID-DP & Foram atribuídos algoritmo interno e limite universal de 28 discos sem fonte primária suficiente. & Mantidas duas paridades e duas falhas; fundamento RDP acrescentado com fonte primária \cite{corbett2004}; tamanho de grupo continua específico do ONTAP. & Revisão técnica do grupo \\
 \hline
-3 & RAID-S & Foi descrito como algoritmo que adapta dinamicamente a distribuição de dados conforme o acesso. & Corrigido: RAID-S/Parity RAID é tecnologia proprietária Symmetrix baseada em grupos de volumes de dados e paridade; não há evidência para a alegada adaptação dinâmica. Base: documentação técnica histórica NASA/EMC. & Revisão técnica do grupo (confirmar responsável) \\
+3 & RAID-S & Foi descrito como algoritmo que adapta dinamicamente a distribuição de dados conforme o acesso. & Corrigido: RAID-S é tecnologia proprietária Symmetrix baseada em grupos de volumes de dados e paridade; não há evidência de adaptação dinâmica. Base: documentação técnica histórica NASA/EMC. & Revisão técnica do grupo \\
 \hline
-4 & Interfaces DAS & A tabela usava ``SATA II/III'' e atribuía ``MTBF relativo'' à interface, como se fosse atributo do protocolo. & Adotada a nomenclatura SATA-IO (SATA 3~Gb/s e 6~Gb/s); confiabilidade passou a ser tratada como atributo do disco, firmware, ambiente e controlador. Base: SATA-IO. & Revisão técnica do grupo (confirmar responsável) \\
+4 & Interfaces DAS & A tabela usava ``SATA II/III'' e atribuía ``MTBF relativo'' à interface, como atributo do protocolo. & Adotada a nomenclatura SATA-IO; confiabilidade passou a ser atributo do disco, firmware, ambiente e controlador. Base: SATA-IO. & Revisão técnica do grupo \\
 \hline
-5 & Interfaces & SAS-4: agregado de 4.500 MB/s; filas SAS fixadas em 256. & Corrigido cálculo para 4.800 MB/s e fila dependente do produto \cite{microchip_sas4,seagate_sas}. & Codex (IA), 10/09/2026 \\
+5 & Interfaces & SAS-4: agregado de 4.500~MB/s; filas SAS fixadas em 256. & Corrigido cálculo para 4.800~MB/s e fila dependente do produto \cite{microchip_sas4,seagate_sas}. & Codex (IA), 10/09/2026 \\
 \hline
 6 & SATA/USB & AHCI confundido com protocolo físico; energia USB vinculada à geração. & Separadas interface de programação, transporte e Power Delivery \cite{intel_ahci,usb_pd}. & Codex (IA), 10/09/2026 \\
 \hline
 7 & eSATA & Origem atribuída à revisão SATA 2.6. & Especificações externas datadas de 2004 \cite{sata_esata}. & Codex (IA), 10/09/2026 \\
 \hline
-8 & RAID 1.5/7 & Atribuição a LSI/Broadcom e descrições sem funcionamento. & Identificada HighPoint; aprofundado RAID 7 com documentação primária \cite{highpoint_15,storagecomputer_7}. & Codex (IA), 10/09/2026 \\
+8 & RAID 1.5/7 & Atribuição a LSI/Broadcom e descrições sem detalhamento de funcionamento. & Identificada HighPoint; aprofundado RAID 7 com documentação primária \cite{highpoint_15,storagecomputer_7}. & Codex (IA), 10/09/2026 \\
 \hline
 9 & Confiabilidade & Igualdades de MTTDL sem modelo de reparo suficiente; MTBF sem convenção. & Derivadas aproximações com reparo serial exponencial e delimitada contagem de tempo \cite{nist_mtbf}. & Codex (IA), 10/09/2026 \\
 \hline
