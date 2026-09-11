@@ -183,9 +183,35 @@
 
 @misc{dbbook_storage,
   author = {Abraham Silberschatz and Henry F. Korth and S. Sudarshan},
-  title = {{Database System Concepts: Chapter 12, Physical Storage Systems}},
+  title = {{Database System Concepts: Chapter 12, Physical Storage Systems --- Slides oficiais dos autores}},
   howpublished = {\url{https://www.db-book.com/slides-dir/PDF-dir/ch12.pdf}},
-  note = {Acesso em: 10 set. 2026. Material didático oficial dos autores, 7a edição.}
+  note = {Acesso em: 10 set. 2026. Material didático oficial dos autores para a 7\textordfeminine{} edição do livro \textit{Database System Concepts}; os slides reproduzem e complementam o texto do Capítulo 12. Utilizado como fonte secundária para \textit{shadowing}/\textit{mirroring} e RAID 0+1/10.}
+}
+
+% =====================================================================
+%  Referências adicionais — interfaces DAS e protocolos
+% =====================================================================
+
+@misc{ieee1394_2008,
+  author       = {{IEEE}},
+  title        = {{IEEE Std 1394-2008: IEEE Standard for a High-Performance Serial Bus}},
+  year         = {2008},
+  howpublished = {\url{https://standards.ieee.org/ieee/1394/4041/}},
+  note         = {Acesso em: 10 set. 2026. Define o protocolo FireWire (IEEE 1394b), modos de velocidade 100 a 800 Mb/s, topologia, cabo m\'{a}ximo de 4,5\,m por segmento e tr\'{a}fego is\'{o}crono e ass\'{i}ncrono.}
+}
+
+@misc{sas4_standard,
+  author       = {{SCSI Trade Association / T10 Technical Committee}},
+  title        = {{Serial Attached SCSI -- 4 (SAS-4): Working Draft}},
+  howpublished = {\url{https://www.t10.org/members/w_sas4.htm}},
+  note         = {Acesso em: 10 set. 2026. Padr\~{a}o que define sinaliza\c{c}\~{a}o a 22,5\,Gb/s com codifica\c{c}\~{a}o 128b/150b, compati\-bilidade com expanders e topologias de at\'{e} 65535 dispositivos.}
+}
+
+@misc{sata_cable_spec,
+  author       = {{Serial ATA International Organization}},
+  title        = {{Serial ATA: High Speed Serialized AT Attachment, Revision 3.5a}},
+  howpublished = {\url{https://sata-io.org/system/files/member-downloads/SATA_Revision_3_5a.pdf}},
+  note         = {Acesso em: 10 set. 2026. Define comprimento m\'{a}ximo de cabo interno: 1\,m; eSATA externo: 2\,m (seções 2.2 e 5.2).}
 }
 
 @misc{highpoint_15,
@@ -274,4 +300,24 @@
  title = {{USB4 System Overview}},
  howpublished = {\url{https://www.usb.org/sites/default/files/D1T1-3%20-%20USB4%20System%20Overview.pdf}},
  note = {Acesso em: 10 set. 2026. Material técnico oficial sobre modos de 20 e 40 Gb/s.}
+}
+
+
+@misc{nvme_overview,
+  author = {{NVM Express}},
+  title = {{NVMe Overview}},
+  howpublished = {\url{https://nvmexpress.org/wp-content/uploads/NVMe_Overview.pdf}},
+  note = {Acesso em: 11 set. 2026. NVMe sobre PCIe e distinção em relação a SAS/SATA.}
+}
+@misc{ti_usb_duplex,
+  author = {{Texas Instruments}},
+  title = {{MSP430 Workshop: USB Devices}},
+  howpublished = {\url{https://software-dl.ti.com/trainingTTO/trainingTTO_public_sw/MSP430_LaunchPad_Workshop/v3/MSP430_Workshop_v3_01.pdf}},
+  note = {Acesso em: 11 set. 2026. Seção USB, p. 7-4: transferências bidirecionais simultâneas em USB 3.0.}
+}
+@misc{postgresql_wal_intro,
+  author = {{PostgreSQL Global Development Group}},
+  title = {{PostgreSQL 16: Write-Ahead Logging (WAL)}},
+  howpublished = {\url{https://www.postgresql.org/docs/16/wal-intro.html}},
+  note = {Acesso em: 11 set. 2026. Seção 30.3: escrita sequencial de WAL.}
 }
