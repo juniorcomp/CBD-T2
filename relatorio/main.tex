@@ -602,8 +602,44 @@ A tabela a seguir reproduz a divisão de autoria registrada pelo grupo.
     \label{tab:autoria}
 \end{table}
 
-\subsection{Decisões do grupo}
-O grupo adotou a proposta como fonte de verdade para escopo e entrega. Para interfaces atuais e RAID proprietário, decidiu usar documentação oficial ou explicitar a limitação da fonte. Decidiu também não aplicar limiar universal de número de discos para recomendar RAID~6 --- a escolha depende de MTTR, capacidade, carga, criticidade e risco operacional, conforme discutido nas equações de MTTDL.
+\subsection{Decisões do grupo (não delegadas à IA)}
+A tabela a seguir consolida as decisões tomadas pelo grupo, detalhando a justificativa de cada escolha arquitetural ou metodológica.
+
+\begin{table}[H]
+    \centering
+    \footnotesize
+    \renewcommand{\arraystretch}{1.5}
+    \begin{tabularx}{\textwidth}{|l|l|X|X|}
+        \hline
+        \textbf{Data} & \textbf{Quem decidiu} & \textbf{Decisão} & \textbf{Justificativa} \\
+        \hline
+        09/09/2026 & Pedro Cintra Silveira & Usar PROPOSTA.md como fonte de verdade e manter checklist no README. & Evita esquecer produtos obrigatórios (PDF, slides, folha de rosto, Post-Mortem). \\
+        \hline
+        10/09/2026 & Daniel e João Batista & Tratar interfaces atuais e RAID proprietário com documentação oficial ou limitação explícita. & Livros-base não cobrem todos os padrões atuais; nomes proprietários não podem ser generalizados. \\
+        \hline
+        10/09/2026 & Jeson Wen Chen & Não usar limiar universal de número de discos para recomendar RAID~6. & A decisão depende de MTTR, capacidade, carga, criticidade e risco operacional. \\
+        \hline
+    \end{tabularx}
+    \caption{Decisões humanas do grupo.}
+    \label{tab:decisoes_grupo}
+\end{table}
+
+\noindent\textbf{Decisões da revisão assistida} (distintas das decisões humanas acima):
+
+\begin{table}[H]
+    \centering
+    \footnotesize
+    \renewcommand{\arraystretch}{1.5}
+    \begin{tabularx}{\textwidth}{|l|l|X|X|}
+        \hline
+        \textbf{Data} & \textbf{Executor} & \textbf{Decisão} & \textbf{Justificativa} \\
+        \hline
+        10/09/2026 & Codex (via usuário) & Separar HDD/SSD, adotar modelos explícitos e fontes primárias; preservar autoria não documentada. & Evitar especificações e contribuições humanas inventadas. \\
+        \hline
+    \end{tabularx}
+    \caption{Decisões da revisão assistida.}
+    \label{tab:decisoes_ia}
+\end{table}
 
 \subsection{O que a revisão corrigiu}
 A revisão técnica executada pelas ferramentas de IA corrigiu riscos recorrentes: separou AHCI (interface de programação) de SATA (protocolo físico) e de NVMe (protocolo distinto sobre PCIe); tratou \textit{byte-level striping} como granularidade própria distinta de \textit{bit-level}; explicitou as hipóteses do modelo de Markov para MTTDL e a convenção de contagem de MTBF; removeu afirmação de tolerância universal para RAID~7; eliminou limiares sem base normativa para RAID~6; separou RAID~0+1 de RAID~10 com exemplo de quais falhas cada topologia tolera; e registrou a distinção entre \textit{mirroring}/\textit{shadowing} de hardware e \textit{shadow paging} transacional. Foram também removidas comparações quantitativas sem benchmark contextualizado.
