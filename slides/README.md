@@ -135,7 +135,7 @@ ninguém lê.
 
 ## Trocar de tema
 
-O tema atual é o [`slidev-theme-academic`](https://www.npmjs.com/package/slidev-theme-academic).
+O tema atual é o tema oficial padrão do Slidev, [`@slidev/theme-default`](https://www.npmjs.com/package/@slidev/theme-default).
 Para experimentar outro:
 
 ```bash

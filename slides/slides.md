@@ -1,10 +1,10 @@
 ---
-theme: academic
+theme: default
 title: DAS, Interfaces e Níveis de RAID para SBD
 info: |
   Trabalho 2 — Construção de Bancos de Dados (UFRJ)
 mdc: true
-layout: cover
+layout: default
 coverDate: ''
 fonts:
   sans: 'Lato'
@@ -13,55 +13,6 @@ fonts:
   weights: '300,400,700'
   provider: 'none'
 ---
-
-<style>
-.slidev-layout.cover h1 { font-size: 2.65rem; line-height: 1.12; }
-.slidev-layout.cover h1 + p { margin-top: 0.5rem !important; }
-
-/* Layout helpers */
-.two-cols   { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-.three-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.2rem; }
-.four-cols  { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1rem; }
-.compact    { font-size: 0.82rem; line-height: 1.35; }
-
-/* Callout */
-.takeaway {
-  background: #1e3a5f18;
-  border-left: 3px solid #2563eb;
-  padding: 0.55rem 0.9rem;
-  border-radius: 4px;
-  margin-top: 0.9rem;
-  font-size: 0.88rem;
-}
-.takeaway.small { font-size: 0.80rem; }
-
-/* Source line */
-.source {
-  font-size: 0.68rem;
-  opacity: 0.55;
-  margin-top: 0.6rem;
-}
-.citation-inline {
-  font-size: 0.68rem;
-  opacity: 0.55;
-  margin-top: 1rem;
-}
-
-/* Debate callout */
-.debate {
-  background: #7c3aed18;
-  border-left: 3px solid #7c3aed;
-  padding: 0.55rem 0.9rem;
-  border-radius: 4px;
-  font-size: 0.88rem;
-}
-
-/* Evidence two-col */
-.evidence > div { background: #f8fafc; border-radius: 6px; padding: 0.8rem 1rem; }
-
-/* Cases grid */
-.cases > div { background: #f1f5f9; border-radius: 6px; padding: 0.65rem 0.85rem; font-size: 0.80rem; }
-</style>
 
 # Arquiteturas de Armazenamento Físico para SBD
 
@@ -287,15 +238,15 @@ layout: default
 
 | Nível | Mín. | Capacidade | Falhas tol. | Escrita | Aplicação em SBD |
 |---|---|---|---|---|---|
-| **0** | 2 | $nC$ | 0 | Sem overhead | Temporários reconstruíveis |
-| **1** | 2 | $C$ | $m-1$ em $m$ cópias | Replicada | WAL, logs e metadados |
-| **2** | ECC | $kC$ | 1 (Hamming) | Coordenada | Histórico — ECC agora interno ao disco |
-| **3** | 3 | $(n-1)C$ | 1 | Todos os discos | Histórico — byte-level, sequencial |
-| **4** | 3 | $(n-1)C$ | 1 | RMW 4 I/Os + gargalo paridade | Raramente usado; RAID 5 substitui |
-| **5** | 3 | $(n-1)C$ | 1 | RMW 4 I/Os — paridade distribuída | OLAP, leitura intensa |
-| **6** | 4 | $(n-2)C$ | 2 | RMW 6 I/Os — dupla paridade | Arrays grandes, discos $\geq$ 4 TB |
-| **0+1** | 4 | $nC/2$ | 1 garantida | Replicada | Preterido frente ao RAID 10 |
-| **10** | 4 | $nC/2$ | 1 por par | Replicada | OLTP pesado, missão crítica |
+| **0** | 2 | $nC$ | 0 | Sem overhead | Temporários |
+| **1** | 2 | $C$ | $m-1$ em $m$ cópias | Replicada | WAL/metadados |
+| **2** | ECC | $kC$ | 1 (Hamming) | Coordenada | Histórico/ECC |
+| **3** | 3 | $(n-1)C$ | 1 | Todos os discos | Byte-level |
+| **4** | 3 | $(n-1)C$ | 1 | RMW + gargalo | Paridade dedicada |
+| **5** | 3 | $(n-1)C$ | 1 | RMW + paridade | OLAP |
+| **6** | 4 | $(n-2)C$ | 2 | RMW + dupla P | Dupla paridade |
+| **0+1** | 4 | $nC/2$ | 1 garantida | Replicada | Evitar; preferir 10 |
+| **10** | 4 | $nC/2$ | 1 por par | Replicada | OLTP |
 
 <!-- RAID 4: o disco de paridade participa de toda escrita → ponto único de contenção. RAID 5 distribui paridade eliminando esse gargalo. -->
 

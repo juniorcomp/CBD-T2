@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@slidev/cli": "^0.48.0",
-    "@slidev/theme-academic": "latest",
+    "@slidev/theme-default": "^0.25.0",
     "playwright-chromium": "^1.42.0"
   }
 }

@@ -1,0 +1,31 @@
+.slidev-layout.cover h1 { font-size: 2.65rem; line-height: 1.12; }
+.slidev-layout.cover h1 + p { margin-top: 0.5rem !important; }
+
+.two-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+.three-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.2rem; }
+.four-cols { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1rem; }
+.compact { font-size: 0.82rem; line-height: 1.35; }
+
+.takeaway {
+  background: #1e3a5f18;
+  border-left: 3px solid #2563eb;
+  padding: 0.55rem 0.9rem;
+  border-radius: 4px;
+  margin-top: 0.9rem;
+  font-size: 0.88rem;
+}
+.takeaway.small { font-size: 0.80rem; }
+
+.source { font-size: 0.68rem; opacity: 0.55; margin-top: 0.6rem; }
+.citation-inline { font-size: 0.68rem; opacity: 0.55; margin-top: 1rem; }
+
+.debate {
+  background: #7c3aed18;
+  border-left: 3px solid #7c3aed;
+  padding: 0.55rem 0.9rem;
+  border-radius: 4px;
+  font-size: 0.88rem;
+}
+
+.evidence > div { background: #f8fafc; border-radius: 6px; padding: 0.8rem 1rem; }
+.cases > div { background: #f1f5f9; border-radius: 6px; padding: 0.65rem 0.85rem; font-size: 0.80rem; }

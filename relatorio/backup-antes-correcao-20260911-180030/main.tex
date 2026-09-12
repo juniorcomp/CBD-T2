@@ -1,0 +1,705 @@
+%  Trabalho -- Construção de Bancos de Dados (UFRJ)
+%  Arquiteturas de Armazenamento Físico para SBD: DAS e RAID
+%
+%  COMPILAR:  latexmk -pdf main.tex
+%             (ou pdflatex main -> bibtex main -> pdflatex main x2)
+%
+% =====================================================================
+\documentclass[titlepage]{article}
+
+% Configurações de Linguagem e Codificação
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+
+% Configurações de Página
+\usepackage[letterpaper,top=2.5cm,bottom=2.5cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+
+% Pacotes Matemáticos e Gráficos
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage[colorlinks=true, allcolors=black]{hyperref}
+\usepackage{float}
+
+% Pacotes para Código Fonte e Tabelas
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{xurl}
+\setlength{\emergencystretch}{2em}
+\newcommand{\acesso}{\textit{10/09/2026}}
+
+% Configuração de Cores para Código
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2
+}
+\lstset{style=mystyle}
+\setcounter{tocdepth}{2}
+
+% Comandos customizados
+
+
+% =====================================================================
+%  FOLHA DE ROSTO
+% =====================================================================
+\title{
+    \vspace{-1cm}
+    {\large Universidade Federal do Rio de Janeiro}\\
+    {\large Instituto de Matemática --- Departamento de Ciência da Computação}\\
+    {\large Construção de Bancos de Dados}\\[1.5cm]
+    \textbf{Arquiteturas de Armazenamento Físico para SBD:}\\
+    \textbf{Um estudo sobre DAS, Interfaces e Níveis de RAID}
+}
+
+\author{
+    Daniel Rebouças de Sousa Barros --- DRE 123273542 \\
+    Hugo Leandro Antunes --- DRE 123143543 \\
+    Jeson Wen Chen --- DRE 123051883 \\
+    João Batista Brasil Junior --- DRE 121091172 \\
+    Pedro Cintra Silveira --- DRE 123419342 \\[1.5cm]
+    {\normalsize Prof. Milton Ramirez}
+}
+
+\date{Setembro de 2026}
+
+\begin{document}
+
+\maketitle
+
+{\color{black}{\tableofcontents}}
+\newpage
+
+% =====================================================================
+\section*{Resumo}
+\addcontentsline{toc}{section}{Resumo}
+% =====================================================================
+Este relatório técnico analisa as arquiteturas de armazenamento de dados com conexão direta (DAS) e os arranjos redundantes de discos independentes (RAID) no contexto de Sistemas de Banco de Dados (SBD). O estudo avalia as principais interfaces de hardware (SATA, SAS, USB, eSATA, FireWire, HBA), distinguindo taxas de enlace, desempenho dos dispositivos e recursos do HBA. Em seguida, examina os fundamentos matemáticos e operacionais do paralelismo de \textit{striping} (níveis de bloco e bit) e da resiliência provida por espelhamento, paridade e códigos de dupla falha. O documento detalha as garantias, limitações de gargalo de escrita e aplicações dos níveis de RAID padronizados (0 a 6 e 10) e soluções proprietárias (como RAID-DP e Matrix), correlacionando os atributos de cada camada de armazenamento físico às exigências de desempenho, confiabilidade e vazão de cargas transacionais (OLTP) e analíticas (OLAP).
+
+% =====================================================================
+\section{Introdução}
+\label{sec:introducao}
+% =====================================================================
+O crescimento exponencial da capacidade de processamento e da memória primária em servidores modernos criou uma disparidade significativa em relação à tecnologia de armazenamento secundário mecânico, cujos tempos de acesso limitam o desempenho geral do sistema \cite{elmasri2016}. Em Sistemas de Banco de Dados (SBD), aplicações web e multimídia, o volume de dados cresce a uma taxa superior à evolução da performance individual dos discos rígidos. Para mitigar esse gargalo, o projeto físico de SBDs emprega conjuntos de múltiplos discos operando em paralelo. O agrupamento físico aumenta a taxa de transferência e o volume de operações de I/O suportado, mas introduz um novo problema: a probabilidade de falha no sistema escala com o número de componentes, ameaçando a integridade dos dados \cite{silberschatz2020}.
+
+A solução para o duplo desafio de performance e confiabilidade é a arquitetura RAID (\textit{Redundant Arrays of Independent Disks}), formalizada por Patterson, Gibson e Katz na Universidade de Berkeley em 1988 \cite{patterson1988}. O modelo RAID combina paralelismo na distribuição de dados e redundância para tolerância a falhas, e sua taxonomia original --- definindo os níveis 1 a 5 --- foi posteriormente expandida pela indústria e pela academia para incluir os níveis 0, 6 e combinações aninhadas. As fontes de base são \textit{Database System Concepts}, de Silberschatz, Korth e Sudarshan \cite{silberschatz2020}; \textit{Fundamentals of Database Systems}, de Elmasri e Navathe \cite{elmasri2016}; e \textit{Database Systems: The Complete Book}, de Garcia-Molina, Ullman e Widom \cite{garciamolina2009}. Em conjunto com a escolha adequada da interface física de armazenamento com conexão direta (DAS, do inglês \textit{Direct Attached Storage}), a configuração correta do nível de RAID determina a capacidade do SBD de atender a altas cargas transacionais (OLTP) ou analíticas (OLAP). Este relatório analisa as principais interfaces de hardware DAS, detalha os fundamentos matemáticos e estruturais dos diferentes níveis de RAID e discute suas aplicações e impactos diretos no projeto de SBDs críticos.
+
+% =====================================================================
+\subsection{Metodologia e delimitações}
+Os livros indicados no enunciado orientam os conceitos; dados de interfaces e produtos são confrontados com documentação primária. Exemplos numéricos são cálculos didáticos, não medições. Os argumentos sobre busca e rotação referem-se a HDDs; em SSDs, latência eletrônica, filas, endurance e proteção contra perda de energia passam a ser determinantes. As comparações de capacidade supõem discos de mesma capacidade, sem descontar metadados, formatação ou hot spares. Acesso às fontes web: 10 de setembro de 2026. Documentos históricos preservados por terceiros são identificados na bibliografia.
+
+\section{Interfaces para DAS (Direct Attached Storage)}
+\label{sec:interfaces_das}
+DAS designa o armazenamento conectado diretamente ao computador, sem uma rede de armazenamento intermediária. A ligação pode ser interna ou externa; um gabinete SAS externo também pode ser DAS. HBA é uma categoria de adaptador, enquanto SATA, SAS e USB especificam interfaces/protocolos. A topologia e o acesso devem ser analisados separadamente do nível RAID \cite{snia_dictionary}.
+
+\subsection{SATA (Serial ATA)}
+SATA substituiu a interface paralela ATA por enlaces seriais. As gerações são identificadas pelas taxas de sinalização, conforme a SATA-IO. Os valores da Tabela~\ref{tab:sata_geracoes} descontam somente a codificação 8b/10b; comandos, enquadramento e limites do dispositivo reduzem a transferência útil \cite{sata_io_naming,sata_esata}.
+\begin{table}[htbp]
+\centering\small
+\begin{tabularx}{\textwidth}{lrrX}
+\toprule
+Interface & Taxa bruta & Após 8b/10b & Fonte / acesso \\
+\midrule
+SATA 1,5 Gb/s & 1,5 Gb/s & 150 MB/s & \cite{sata_io_naming,sata_esata}; \acesso \\
+SATA 3 Gb/s & 3 Gb/s & 300 MB/s & \cite{sata_io_naming,sata_esata}; \acesso \\
+SATA 6 Gb/s & 6 Gb/s & 600 MB/s & \cite{sata_io_naming}; \acesso \\
+\bottomrule
+\end{tabularx}
+\caption{Taxas SATA: limites de enlace, não resultados de benchmark.}
+\label{tab:sata_geracoes}
+\end{table}
+
+AHCI é a interface de programação do controlador para o software, não o protocolo físico SATA. NCQ permite comandos pendentes e reordenação no dispositivo; a implementação AHCI oferece até 32 posições de comando por porta. O suporte a NCQ e a remoção a quente depende da combinação de controlador, dispositivo, driver e instalação \cite{intel_ahci}. Em HDDs, reordenar acessos pode reduzir deslocamentos mecânicos. Em SSDs, a ausência desse custo muda o perfil de desempenho; a taxa SATA, por si só, não define os IOPS do dispositivo.
+
+Para SBDs, SATA é uma opção quando capacidade, custo e desempenho medido atendem à carga. Não há fundamento para classificar todo disco SATA como inadequado a dados críticos: proteção contra perda de energia, firmware, redundância e recuperação precisam ser avaliados no produto concreto. CRC de enlace detecta erros de transmissão, mas não comprova integridade de toda a cadeia de armazenamento \cite{snia_dictionary}.
+
+\subsection{eSATA (External SATA)}
+A SATA-IO publicou requisitos externos de conectores, cabos e sinais em 2004. O eSATA preserva o transporte SATA, mas possui requisitos elétricos próprios e cabeamento externo de até 2 metros; não é apenas um conector SATA interno com outra forma. A versão convencional não fornece energia pelo cabo, exigindo alimentação separada \cite{sata_esata}. Variantes combinadas de alimentação devem ser identificadas pelo equipamento, sem pressupor compatibilidade universal.
+
+É aplicável a expansão e backup externo em instalações que já dispõem da porta. A ausência de uma ponte USB--SATA reduz uma camada de tradução, mas não demonstra menor latência que qualquer dispositivo USB: mídia, controlador e carga podem dominar o resultado. Remoção a quente tampouco dispensa desmontagem e sincronização dos dados pelo sistema.
+
+\subsection{SAS (Serial Attached SCSI)}
+SAS transporta comandos SCSI em enlaces seriais e pode conectar discos e gabinetes por meio de expanders. Dispositivos de duas portas permitem caminhos redundantes, desde que o restante da instalação e o software os suportem. A profundidade de fila depende do produto: por exemplo, o manual do Barracuda ES.2 SAS especifica 128 comandos, em vez de um valor fixo para toda a família SAS \cite{seagate_sas}.
+
+O enlace permite comunicação nos dois sentidos; isso não faz um único HDD executar duas operações mecânicas independentes ao mesmo tempo. Compatibilidade com discos SATA, número de dispositivos, proteção T10-PI e multipathing devem ser confirmados no controlador e na cadeia completa. A comparação entre SAS e SATA precisa considerar esses recursos e o suporte operacional, além da taxa nominal \cite{microchip_storage,seagate_sas}.
+
+Como exemplo de conversão, o SAS-4/24G SAS opera a 22,5 Gb/s com codificação 128b/150b \cite{microchip_sas4}. Logo:
+\[
+22{,}5\times\frac{128}{150}\times\frac{1000}{8}
+=2.400\ \mathrm{MB/s\ por\ direção}.
+\]
+A soma dos sentidos é 4.800 MB/s antes de outras sobrecargas. Não corresponde a uma leitura unidirecional a 4.800 MB/s. Em SBDs, SAS é indicado quando caminhos redundantes, manutenção e recursos de gerenciamento justificam o custo; a escolha não dispensa comparar HDDs e SSDs adequados à carga.
+
+\subsection{FireWire (IEEE 1394)}
+FireWire é uma interface serial histórica que permite interligação de dispositivos e tráfego assíncrono e isocrônico, padronizada pela IEEE como IEEE~1394 \cite{ieee1394_2008}. O controlador TSB83AA23 da Texas Instruments exemplifica suporte às classes de 100, 200, 400 e 800 Mb/s \cite{ti_firewire}. Esses valores são taxas de barramento, não vazão garantida de arquivos. O transporte isocrônico atende aplicações temporizadas; operações de armazenamento não passam a ter durabilidade transacional por usá-lo. O padrão IEEE~1394b define cabo de até 4,5\,m por segmento; topologias em cadeia ou estrela estendem o alcance total \cite{ieee1394_2008}.
+
+Para comparação, as classes FireWire 400 e 800 correspondem nominalmente a 50 e 100 MB/s antes de sobrecargas, por simples divisão por oito. Alimentação depende do conector e da implementação; não se deve prometer potência pelo nome da interface. Em um projeto novo de SBD, sua inclusão só se justifica por compatibilidade com equipamentos existentes e suporte disponível. Seu estudo ilustra a evolução do DAS externo, sem exigir tratá-lo como alternativa atual equivalente a SAS ou USB4.
+
+\subsection{USB 3.x e USB4}
+USB 3.2 reúne as modalidades Gen 1 (5 Gb/s), Gen 2 (10 Gb/s) e Gen 2x2 (20 Gb/s). O modo de duas pistas exige conexão compatível, e o formato USB-C sozinho não informa a velocidade disponível \cite{usb32}. USB4 introduziu modos de 20 e 40 Gb/s e também multiplexa protocolos \cite{usb4_overview}, podendo compartilhar recursos entre dados e vídeo. A especificação v2.0 introduz 80 Gb/s e operação opcional assimétrica de 120 Gb/s em um sentido e 40 Gb/s no outro, com sinalização PAM3 \cite{usb4_announcement}.
+
+USB Power Delivery define separadamente a negociação de energia; a geração de dados não garante potência de alimentação. Fonte, cabo e dispositivo precisam ser compatíveis \cite{usb_pd}. Para armazenamento, deve-se distinguir BOT de UAS/UASP: o último permite filas de comandos, mas requer suporte da ponte e do driver. No USB4, uma unidade também pode usar tunelamento PCIe; não se deve descrever todo armazenamento USB4 como tradução USB--SATA \cite{usb_uas,usb4_spec}.
+
+Backup portátil, desenvolvimento e expansão externa são aplicações possíveis. O uso em produção exige testar persistência de escritas, desconexão, recuperação e desempenho sob concorrência; uma taxa nominal elevada não resolve esses requisitos.
+
+\subsection{HBA (Host Bus Adapter)}
+Um HBA conecta o host a dispositivos de armazenamento. Há HBAs para DAS e para redes de armazenamento; a sigla não implica exclusivamente SAS nem define um nível RAID \cite{snia_dictionary}. Um adaptador SAS em passthrough expõe discos ao sistema operacional, que pode implementar RAID por software. Uma controladora RAID apresenta volumes lógicos e executa parte da gestão de redundância no adaptador. Produtos podem combinar modos, mas cache protegido e aceleração de paridade não são requisitos de todo HBA \cite{microchip_storage}.
+
+A seleção deve verificar largura e geração do enlace PCIe, portas, firmware, drivers, capacidade de filas e política de cache. Para o SBD, confirmar uma escrita em cache protegido pode reduzir a latência; a proteção precisa sobreviver às falhas consideradas e respeitar comandos de sincronização. RAID por software também pode usar CPUs modernas e dispositivos com proteção contra perda de energia; não existe vencedor universal apenas pela localização da lógica.
+
+\subsection{Comparação das Interfaces DAS}
+\begin{table}[htbp]
+\centering\footnotesize
+\begin{tabularx}{\textwidth}{p{0.13\textwidth}p{0.15\textwidth}p{0.09\textwidth}p{0.08\textwidth}p{0.07\textwidth}X}
+\toprule
+Interface & Taxa nominal & Cabo máx. & Hot-plug & Duplex & Protocolo / aplicação \\
+\midrule
+SATA interno & 6 Gb/s (após 8b/10b: 600 MB/s) & 1 m & Condicional\textsuperscript{a} & Half & AHCI/NVMe; 1 disp. por porta; armazenamento econômico em servidor. \\
+eSATA externo & Igual SATA & 2 m & Sim\textsuperscript{a} & Half & SATA sem ponte; alimentação separada; backup/expansão externa. \\
+SAS (SAS-4) & 22,5 Gb/s por direção (24G) & 8 m\textsuperscript{b} & Sim & Full & SCSI; fila 128+ cmd; expander p/ centenas de disp.; missão crítica. \\
+FireWire 800 & 800 Mb/s (≈100 MB/s) & 4,5 m & Sim & Half & IEEE 1394b; isócrono e assíncrono; uso legado. \\
+USB 3.2 & 5/10/20 Gb/s & 1--2 m\textsuperscript{c} & Sim & Half\textsuperscript{d} & BOT/UASP; 1 disp. por porta; backup e expansão portátil. \\
+USB4 v2.0 & Até 80 Gb/s sim. (120/40 assim.) & 0,8 m\textsuperscript{e} & Sim & Full & PCIe/DP/USB tunelados; banda compartilhada; DAS externo de alto desempenho. \\
+HBA & Depende do enlace PCIe & --- & Sim & Dep. prot. & Adaptador; passthrough (expõe discos ao SO) ou RAID offload; verificar cache protegido. \\
+\bottomrule
+\end{tabularx}
+\smallskip
+\noindent\textsuperscript{a}~Requer suporte no controlador, driver e instalação; não garantido por padrão \cite{sata_cable_spec,intel_ahci}.\quad
+\textsuperscript{b}~Cabo SAS até 8\,m em topologia direta; expanders permitem alcance maior \cite{seagate_sas,sas4_standard}.\quad
+\textsuperscript{c}~USB 3.2 Gen 2x2 exige cabo certificado; comprimento máximo efetivo varia com qualidade do cabo.\quad
+\textsuperscript{d}~Cada transação é unidirecional; UASP reduz overhead de protocolo mas não torna o enlace full-duplex \cite{usb_uas}.\quad
+\textsuperscript{e}~Passivo 40 Gbps; cabo ativo permite até 2\,m para 40 Gbps; 80 Gbps exige cabo Thunderbolt 4 ou superior \cite{usb4_spec}.
+\caption{Comparação de interfaces DAS por taxa, distância, hot-plug, modo de operação e protocolo. Taxas são limites de enlace, não benchmarks; demais valores típicos de produto ou padrão, não garantidos universalmente.}
+\label{tab:interfaces_das}
+\end{table}
+
+\section{Fundamentos de RAID: Paralelismo e Redundância}
+\label{sec:paralelismo_redundancia}
+% =====================================================================
+A tecnologia RAID (\textit{Redundant Array of Independent Disks}) foi desenvolvida para mitigar o gargalo de desempenho de entrada e saída (I/O) em sistemas computacionais e, simultaneamente, contornar a redução na confiabilidade inerente ao uso de múltiplos discos físicos \cite{silberschatz2020}. Para atingir esses objetivos em Sistemas de Banco de Dados (SBD), as arquiteturas RAID fundamentam-se em dois princípios: o paralelismo e a redundância \cite{silberschatz2020}.
+
+\subsection{Paralelismo e Performance}
+O desempenho de um sistema de armazenamento é limitado pelas características mecânicas e eletrônicas de uma única unidade de disco \cite{silberschatz2020}. Ao agrupar diversos discos sob uma única interface lógica, o RAID amplia o paralelismo em duas frentes:
+\begin{itemize}
+    \item \textbf{Taxa de transferência:} requisições extensas são divididas em fragmentos menores que múltiplos discos leem ou gravam simultaneamente, reduzindo o tempo total da operação em comparação com um disco sequencial \cite{silberschatz2020}.
+    \item \textbf{Vazão de I/O (\textit{throughput}):} em ambientes transacionais (OLTP), discos diferentes atendem a requisições pequenas e independentes, elevando o número de operações de I/O por segundo (IOPS) processado \cite{silberschatz2020}.
+\end{itemize}
+
+\subsection{Redundância, Disponibilidade e Confiabilidade}
+A adição de múltiplos discos independentes introduz um desafio estatístico: a probabilidade de falha de pelo menos um disco em um \textit{array} grande é significativamente maior do que a de um disco isolado \cite{silberschatz2020}. Se cada disco tem probabilidade $q$ de falhar no intervalo considerado e as falhas são independentes, a probabilidade de pelo menos uma falha é $1-(1-q)^n$. Essa dedução explicita a diferença entre falha de componente e perda de dados no array redundante. Para que o agrupamento seja viável em ambientes críticos, o RAID armazena informações adicionais --- cópias exatas dos dados ou cálculos de paridade --- que permitem a reconstrução do estado original no caso de falhas físicas \cite{silberschatz2020}.
+
+Essa redundância contribui para dois atributos, dentro do modelo de falhas suportado. O primeiro é a \textbf{confiabilidade}: a capacidade do sistema de preservar a integridade da informação ao longo do tempo, reduzindo a probabilidade de perda permanente de dados \cite{silberschatz2020}. O segundo é a \textbf{disponibilidade}: a resiliência operacional que permite ao banco de dados continuar atendendo a consultas e atualizações durante certas falhas de disco, com possível degradação de desempenho, enquanto aguarda a substituição do hardware danificado, pois o controlador RAID calcula os dados faltantes a partir dos discos sobreviventes \cite{silberschatz2020}.
+
+\subsection{Gargalos e Limitações Práticas do Paralelismo}
+O ganho efetivo de desempenho com múltiplos discos é limitado por quatro fatores que o projetista do SBD deve dimensionar. O primeiro é o \textit{overhead} do controlador: o processamento da distribuição e reagregação dos dados consome ciclos de CPU ou do processador do HBA. O segundo é a contenção no barramento: se múltiplos discos compartilham o mesmo canal físico (e.g., um único canal SAS), a largura de banda do canal torna-se o gargalo independentemente do número de discos. O terceiro é o desbalanceamento de carga: se os dados não estão uniformemente distribuídos, alguns discos tornam-se pontos quentes (\textit{hotspots}) enquanto outros permanecem ociosos. O quarto é o \textit{straggler effect}: em operações que exigem dados de múltiplos discos, o tempo de resposta é determinado pelo disco mais lento, limitando o ganho agregado \cite{garciamolina2009}. O \textit{striping} uniforme e o dimensionamento correto do \textit{strip size} são as principais ferramentas para mitigar esses fatores.
+
+% =====================================================================
+\section{Técnicas de Distribuição de Dados (Striping)}
+\label{sec:striping}
+% =====================================================================
+A técnica de \textit{data striping} (distribuição de dados) fraciona os dados em unidades de tamanho fixo --- denominadas \textit{strips} ou \textit{chunks} --- e os espalha por múltiplos discos independentes com o objetivo de maximizar o paralelismo das operações de I/O \cite{silberschatz2020}. O tamanho da unidade de distribuição (\textit{strip size} ou \textit{chunk size}) é um parâmetro de configuração crítico que determina a granularidade do paralelismo \cite{garciamolina2009}: uma granularidade fina (bit ou byte) maximiza o paralelismo para requisições individuais grandes, mas introduz \textit{overhead} de sincronização e torna cada requisição dependente de todos os discos; uma granularidade grossa (bloco ou múltiplos blocos) permite que requisições pequenas sejam atendidas por um único disco, melhorando o \textit{throughput} para cargas de trabalho com alta concorrência de requisições independentes. A técnica admite três granularidades principais --- bit, byte e bloco --- apresentadas abaixo; a escolha entre elas define o perfil de desempenho do \textit{array} e, consequentemente, o nível de RAID mais adequado.
+
+\subsection{Bit-level striping (Distribuição em nível de bit)}
+O \textit{bit-level striping} divide os bits de cada byte de forma que cada bit seja armazenado em um disco distinto \cite{silberschatz2020}. Em um \textit{array} de oito discos, por exemplo, o bit $i$ de cada byte é gravado no disco $i$. Nesse modelo, cada operação de I/O acesse todos os discos simultaneamente, permitindo ganho de transferência próximo ao número de discos de dados quando os demais componentes não limitam o acesso \cite{silberschatz2020}. A contrapartida é que cada requisição ocupa todos os braços de leitura e gravação, impedindo que requisições menores e independentes sejam processadas em paralelo --- limitação severa em cargas OLTP. Na prática, o \textit{bit-level striping} é raramente utilizado em sistemas contemporâneos, sendo encontrado historicamente em implementações de RAID~2 com códigos de Hamming \cite{garciamolina2009}.
+
+\subsection{Byte-level striping (Distribuição em nível de byte)}
+O \textit{byte-level striping} distribui bytes inteiros ciclicamente entre os discos, de modo que bytes consecutivos de um mesmo arquivo residem em discos diferentes \cite{silberschatz2020,garciamolina2009}. Em um \textit{array} de $n$ discos, o byte $j$ é alocado no disco $(j \bmod n)$. Assim como o \textit{bit-level striping}, esta granularidade faz com que cada requisição de I/O utilize todos os discos simultaneamente, oferecendo alta taxa de transferência para operações sequenciais de grande volume. O gargalo é o mesmo: a concorrência de requisições independentes é inexistente --- o sistema comporta apenas uma requisição de cada vez, pois todos os braços são mobilizados por ela. O \textit{byte-level striping} é a base operacional do RAID~3, onde é frequentemente chamado de \textit{bit-interleaved} na terminologia de Silberschatz ou \textit{byte-level} em outras fontes \cite{elmasri2016}, e de RAID~2 (que o combina com bits de verificação ECC). Não tem uso prático independente em instalações modernas, mas sua compreensão é essencial para entender por que RAID~5 (nível de bloco) suplantou RAID~2 e RAID~3.
+
+\subsection{Block-level striping (Distribuição em nível de bloco)}
+O \textit{block-level striping} distribui blocos lógicos inteiros entre os discos, e o \textit{array} é tratado pelo sistema operacional como um único disco de grande capacidade \cite{silberschatz2020}. Em um RAID~0 didático, com cada unidade de distribuição igual a um bloco e índices lógicos iniciados em zero, os blocos são gravados em padrão circular (\textit{round-robin}): em um conjunto de $n$ discos, o bloco lógico $i$ é alocado no disco $(i \bmod n) + 1$ \cite{silberschatz2020}. Silberschatz, Korth e Sudarshan \cite{silberschatz2020} demonstram que o \textit{block-level striping} oferece o melhor equilíbrio entre paralelismo e concorrência: para requisições grandes (varreduras sequenciais de tabelas), múltiplos blocos consecutivos são lidos em paralelo de discos diferentes, alcançando \textit{throughput} proporcional ao número de discos; para requisições pequenas (leituras aleatórias de índices B-tree), cada requisição é atendida por um único disco, permitindo que o \textit{array} processe $n$ requisições independentes simultaneamente. Nos níveis com paridade, o mapeamento também reserva posições para redundância; a expressão anterior não é sua fórmula geral de endereçamento. É essa dupla vantagem que torna o \textit{block-level striping} a base dos níveis RAID 0, 4, 5 e 6.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{img/paralelindisl.jpeg}
+    \caption{Comparação entre \textit{bit-level striping} (a) e \textit{block-level striping} (b) em um \textit{array} de 4 discos. Em (a), bits sucessivos são distribuídos ciclicamente pelos discos; em (b), blocos inteiros são distribuídos em padrão \textit{round-robin}. Adaptado de \cite{silberschatz2020}.}
+    \label{fig:striping_comparison}
+\end{figure}
+
+% =====================================================================
+\section{Técnicas de Replicação (Mirroring e Shadowing)}
+\label{sec:mirroring_shadowing}
+% =====================================================================
+Para garantir redundância e proteger os dados contra falhas físicas, as arquiteturas de armazenamento utilizam técnicas de replicação. Neste documento, adotamos a seguinte convenção terminológica, alinhada às fontes consultadas: \textbf{\textit{mirroring}} (espelhamento) refere-se à técnica de hardware de manter cópias físicas idênticas em discos distintos --- base do RAID~1; \textbf{\textit{shadowing}}, no contexto de hardware de discos, é tratado como sinônimo de \textit{mirroring} por Silberschatz, Korth e Sudarshan \cite{silberschatz2020} (seção 12.5) e por Elmasri e Navathe \cite{elmasri2016} (seção 16.10). Já \textbf{\textit{shadow paging}} designa uma técnica distinta de recuperação transacional, apresentada na subseção seguinte.
+
+\subsection{Mirroring (Espelhamento)}
+O \textit{mirroring} é a técnica de redundância primária em sistemas de discos e a base do nível RAID~1 \cite{silberschatz2020}. Cada operação de gravação (\textit{write}) solicitada pelo SBD é executada integralmente em todos os discos que compõem o espelho, enquanto as operações de leitura (\textit{read}) podem ser distribuídas entre os discos para melhorar o desempenho. Elmasri e Navathe \cite{elmasri2016} detalham que, em \textit{arrays} espelhados com $m$ cópias, o controlador pode direcionar requisições de leitura ao disco cujo atuador está mais próximo do setor solicitado, reduzindo a latência média; o \textit{throughput} de leitura é teoricamente multiplicado por $m$. O throughput de escrita, contudo, é limitado pelo disco mais lento do par, pois toda escrita deve ser replicada em todas as cópias. Com \textit{write-back caching} protegido e semântica de persistência correta, as escritas podem ser confirmadas à aplicação antes da replicação completa, mitigando a penalidade de latência. No caso de duas cópias, são necessários $2n$ discos para armazenar a capacidade de $n$, um overhead de 100\% que faz do RAID~1 uma escolha para volumes de alta criticidade como \textit{write-ahead logs} (WAL) e metadados do SBD. Silberschatz, Korth e Sudarshan \cite{silberschatz2020} recomendam espelhamento para \textit{logs} de transação (\textit{redo/undo logs}), onde a perda de dados pode comprometer a propriedade de durabilidade (D) do modelo ACID.
+
+\subsection{Shadowing}
+No contexto de discos do enunciado, \textit{shadowing} e \textit{mirroring} designam o espelhamento: manter cópias físicas do mesmo conteúdo. Esse uso aparece explicitamente no material dos autores de \textit{Database System Concepts} \cite{dbbook_storage}.
+
+\textit{Shadow paging} é outro conceito, pertencente à recuperação transacional. Em uma implementação básica, atualizações são escritas em novas páginas, preservando a tabela anterior. Após persistir as páginas e a nova tabela, o commit muda atomicamente a referência persistente para a nova versão. Uma falha antes dessa mudança preserva o estado antigo; depois dela, a recuperação deve reconhecer o estado confirmado. Isso não exige cópias em discos independentes e, portanto, não fornece por si só tolerância à perda física da unidade \cite{elmasri2016}.
+
+\section{Métricas de Confiabilidade e Falhas}
+\label{sec:metricas_confiabilidade}
+% =====================================================================
+% =====================================================================
+A avaliação quantitativa da confiabilidade de um sistema de armazenamento baseado em RAID depende de um conjunto de métricas estatísticas derivadas da teoria de confiabilidade \cite{silberschatz2020}. Elas permitem ao projetista do SBD comparar objetivamente configurações de RAID e estimar a vida útil do sistema antes que ocorra perda irreversível de dados.
+
+\subsection{MTTF (Mean Time to Failure)}
+O MTTF (\textit{Mean Time to Failure}) é o tempo médio esperado até que um componente individual --- tipicamente um disco rígido --- apresente falha permanente \cite{silberschatz2020}. Valores publicados por fabricantes são estimativas populacionais sob condições especificadas, não garantias individuais nem prazo de substituição.
+
+Para um disco isolado com MTTF de $M$ horas, a taxa de falha instantânea (assumindo distribuição exponencial) é $\lambda = 1/M$. Quando $n$ discos independentes operam simultaneamente, a taxa combinada passa a $\lambda_{\text{grupo}} = n/M$, e o MTTF do grupo --- o tempo até que \textit{qualquer} disco falhe --- é:
+\begin{equation}
+    \text{MTTF}_{\text{grupo}} = \frac{M}{n}
+    \label{eq:mttf_grupo}
+\end{equation}
+Um \textit{array} de 100 discos com MTTF individual de 1.200.000 horas tem MTTF de grupo de apenas 12.000 horas ($\approx$ 1,4 anos), o que ilustra a necessidade da redundância \cite{silberschatz2020}.
+
+\subsection{MTTR (Mean Time to Repair)}
+O MTTR (\textit{Mean Time to Repair}) quantifica o tempo médio necessário para detectar uma falha, substituir o componente defeituoso e reconstruir integralmente os dados a partir da redundância disponível \cite{silberschatz2020}. Em contexto de RAID, esse tempo inclui a detecção pelo controlador ou monitoramento, a intervenção humana ou logística para substituição física e o \textit{rebuild}, durante o qual o controlador lê os discos sobreviventes e recomputa os blocos faltantes no disco substituto.
+
+O MTTR define a \textbf{janela de vulnerabilidade}: o período em que o sistema opera em modo degradado, sem redundância completa. Se um segundo disco falhar durante essa janela, pode ocorrer perda permanente de dados \cite{silberschatz2020}. O tempo de reconstrução depende dos bytes a recompor, da banda efetiva disponível e da concorrência com a aplicação. Uma estimativa inicial é $T_{\mathrm{rebuild}}\approx B/v$, somando-se detecção e logística; não há faixa de horas universal para uma dada capacidade.
+
+\subsection{MTBF (Mean Time Between Failures)}
+MTBF refere-se ao intervalo médio entre falhas de um sistema reparável. Formalmente, para um sistema que alterna entre os estados operacional e em reparo:
+\begin{equation}
+    \mathrm{MTBF} = U + D,
+    \label{eq:mtbf}
+\end{equation}
+onde $U$ é o tempo médio operacional por ciclo (equivalente ao MTTF em distribuição exponencial) e $D$ é o tempo médio indisponível por ciclo (equivalente ao MTTR). É preciso declarar como o tempo é contabilizado: em ensaios de confiabilidade, uma estimativa comum divide o tempo total de operação pelo número de falhas; o modelo exponencial relaciona $U$ a $1/\lambda$ \cite{nist_mtbf}. Evita-se, assim, impor $\mathrm{MTBF}=\mathrm{MTTF}+\mathrm{MTTR}$ sem explicitar a convenção, que só é válida sob hipóteses explícitas.
+
+Para um serviço que alterna entre operação e indisponibilidade, a disponibilidade estacionária é
+\[
+A=\frac{U}{U+D}.
+\]
+A expressão decorre da fração de tempo operacional por ciclo. O tempo de reconstrução de um RAID degradado não deve ser automaticamente usado como $D$: o serviço pode permanecer disponível durante todo o rebuild. Falha de componente, indisponibilidade e perda de dados são eventos distintos \cite{snia_dictionary}.
+
+\subsection{MTTDL (Mean Time to Data Loss)}
+O MTTDL (\textit{Mean Time to Data Loss}) é a métrica mais relevante para a escolha do nível de RAID em SBDs: ele quantifica o tempo médio esperado até que o sistema sofra uma perda de dados irrecuperável, ou seja, até que o número de falhas simultâneas exceda a capacidade de tolerância do array \cite{silberschatz2020}. Ao contrário do MTTF (que mede a falha de um componente individual) e do MTTR (que mede o tempo de reparo), o MTTDL captura a interação entre ambos: um MTTR menor --- obtido com hot spares e reconstrução rápida --- aumenta o MTTDL de forma quadrática (RAID~5) ou cúbica (RAID~6), tornando o tempo de reparo o parâmetro de projeto mais crítico. MTTDL mede o tempo médio até a perda permanente de dados. Para explicitar as hipóteses, seja $M=1/\lambda$ o MTTF de cada disco e $R=1/\mu$ o tempo médio de reparo. Adota-se aqui um modelo didático de Markov: discos idênticos, falhas independentes e exponenciais, reparos exponenciais com taxa $\mu$ e \textbf{um reparo por vez}. Excluem-se erros latentes, falhas correlacionadas, falhas de controlador e erro humano. Os resultados seguintes são derivações sob essas premissas, não especificações de produto.
+
+Para um par espelhado ou um RAID~5 com $n$ discos, a primeira falha ocorre à taxa $n\lambda$. No estado degradado, a probabilidade de outra falha anteceder o reparo é
+\[
+\frac{(n-1)\lambda}{\mu+(n-1)\lambda}
+\approx(n-1)\lambda R,
+\qquad n\lambda R\ll1.
+\]
+Multiplicando essa probabilidade pela taxa de entrada no estado degradado e invertendo o resultado, obtêm-se as aproximações dominantes:
+\begin{align}
+\mathrm{MTTDL}_{1,\,2\,\text{cópias}}&\approx\frac{M^2}{2R},\label{eq:mttdl_raid1}\\
+\mathrm{MTTDL}_{5}&\approx\frac{M^2}{n(n-1)R}.\label{eq:mttdl_raid5}
+\end{align}
+
+Para RAID~6, o caminho raro até a perda passa de zero para um, dois e três discos falhados antes dos reparos. No modelo de reparo serial adotado, seu termo dominante é
+\begin{equation}
+\mathrm{MTTDL}_{6}\approx\frac{M^3}{n(n-1)(n-2)R^2}.
+\label{eq:mttdl_raid6}
+\end{equation}
+Com reparos independentes em paralelo, a taxa de saída do estado com duas falhas pode ser $2\mu$, alterando o coeficiente; com duração de rebuild fixa, este modelo exponencial também deixa de ser exato. Portanto, a fórmula não deve ser transplantada para uma controladora sem modelar sua política de reconstrução.
+
+Exemplo próprio: para $M=1.200.000$ h e $R=24$ h, o par espelhado apresenta aproximadamente $3\times10^{10}$ h; um RAID~5 de oito discos, $1{,}07\times10^9$ h. Esses valores enormes não são previsões de vida útil: revelam quão otimista é excluir causas comuns e erros de leitura. Dentro do modelo, dobrar $R$ reduz pela metade o MTTDL de RAID~5 e a um quarto o de RAID~6. A análise serve para estudar sensibilidade; uma estimativa operacional precisa considerar mecanismos adicionais de falha \cite{corbett2004,krioukov2008}.
+
+\subsection{Impacto das Métricas na Escolha do RAID para SBDs}
+As métricas acima guiam diretamente decisões de projeto em bancos de dados de missão crítica \cite{silberschatz2020}:
+\begin{itemize}
+    \item \textbf{Reduzir o MTTR:} manter discos \textit{hot spare} (sobressalentes conectados e prontos) no \textit{array} permite que a reconstrução inicie sem intervenção humana e diminui a janela de vulnerabilidade.
+    \item \textbf{Escolher o nível de RAID:} em \textit{arrays} com muitos discos ou discos de grande capacidade, o tempo de reconstrução torna-se maior; nesse cenário, as equações de MTTDL podem justificar RAID~6 ou RAID~10 em vez de RAID~5.
+    \item \textbf{Monitorar preventivamente:} S.M.A.R.T.\ e análises preditivas ajudam a identificar falhas iminentes e a substituir discos antes da operação degradada.
+\end{itemize}
+
+
+% =====================================================================
+\section{Níveis de RAID Padrão e Bloco de Paridade}
+\label{sec:raid_padrao}
+% =====================================================================
+% =====================================================================
+Os diferentes níveis de RAID são estratégias distintas de combinação entre as técnicas de \textit{striping} (distribuição de dados) e redundância (espelhamento ou paridade), cada qual otimizando um equilíbrio específico entre desempenho, tolerância a falhas e eficiência de uso do espaço de armazenamento \cite{silberschatz2020}. Os níveis 1 a 5 foram apresentados no artigo seminal de Patterson, Gibson e Katz \cite{patterson1988}, e os níveis compostos (RAID 0+1 e RAID 10) surgiram posteriormente para combinar vantagens de níveis distintos.
+
+\subsection{Conceito de Bloco de Paridade e Operação XOR}
+Antes de apresentar os níveis individualmente, é fundamental compreender o conceito de \textbf{bloco de paridade}, usado nas organizações com paridade em bloco; RAID~2 emprega bits de verificação ECC, enquanto RAID~6 requer duas relações independentes de redundância \cite{silberschatz2020}. A paridade é um valor calculado a partir dos blocos de dados que permite a reconstrução de qualquer bloco individual perdido.
+
+O cálculo baseia-se na operação lógica XOR (\textit{exclusive OR}), que possui a propriedade matemática essencial: se $P = B_1 \oplus B_2 \oplus \ldots \oplus B_{n-1}$, então qualquer bloco $B_i$ pode ser reconstruído a partir dos demais blocos e de $P$:
+\begin{equation}
+    B_i = B_1 \oplus \ldots \oplus B_{i-1} \oplus B_{i+1} \oplus \ldots \oplus B_{n-1} \oplus P
+    \label{eq:xor_recovery}
+\end{equation}
+
+Essa propriedade explica a recuperação de uma perda conhecida com paridade XOR simples: um único bloco de paridade protege $(n-1)$ blocos de dados contra a perda de qualquer um deles \cite{silberschatz2020}.
+
+\subsection{RAID 0 --- Striping Puro (Sem Redundância)}
+O RAID~0 implementa exclusivamente \textit{block-level striping}, distribuindo blocos de dados ciclicamente entre $n$ discos sem qualquer forma de redundância \cite{silberschatz2020}. Sem cálculo de paridade nem escrita duplicada, o RAID~0 tem baixo custo adicional; taxa de transferência e IOPS podem crescer com o número de discos, dentro dos limites do controlador, enlace, alinhamento e distribuição da carga. A contrapartida é a ausência de redundância: uma falha pode inutilizar o volume lógico e causar perda de dados, embora não apague fisicamente os blocos dos discos sobreviventes. O MTTDL é de fato menor que o de um disco isolado: $\text{MTTDL}_{\text{RAID 0}} = \text{MTTF}/n$. Por essa razão, o RAID~0 é adequado apenas para dados temporários ou descartáveis (tabelas temporárias de \textit{sort}, espaço de \textit{swap} de consultas), nunca para dados persistentes ou \textit{logs} de transação \cite{silberschatz2020}.
+
+\subsection{RAID 1 --- Mirroring (Espelhamento)}
+O RAID~1 replica cada bloco de dados em dois (ou mais) discos físicos \cite{silberschatz2020}. O desempenho de leitura é superior ao de um disco isolado, pois o controlador distribui requisições entre os discos do par, podendo aproximar-se do dobro dos IOPS de leitura em um par, com carga paralela e balanceada. O desempenho de escrita, por outro lado, é limitado pela velocidade do disco mais lento, no modo write-through; com write-back protegido, a confirmação pode ocorrer no cache persistente antes da gravação em ambos os discos. O nível tolera a falha de até $(m-1)$ discos em um grupo de $m$ cópias (tipicamente $m=2$), com eficiência de espaço de $1/m$ (50\% para duas cópias). Essa combinação de redundância e reconstrução localizada faz do RAID~1 a escolha preferida para \textit{write-ahead logs} (WAL) e metadados críticos do banco \cite{silberschatz2020} --- volumes de menor capacidade nos quais o custo de espaço é justificável.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.72\textwidth]{img/raidlevels.jpeg}
+    \caption{Visão geral das arquiteturas dos principais níveis RAID: (a)~RAID~0 --- \textit{striping} sem redundância; (b)~RAID~1 --- espelhamento completo (C = cópia); (c)~RAID~5 --- paridade distribuída entre todos os discos (P); (d)~RAID~6 --- dupla paridade distribuída (P e Q). Adaptado de \cite{silberschatz2020}.}
+    \label{fig:raid_levels_overview}
+\end{figure}
+
+\subsubsection{Cenário Prático: RAID 1 em Logs de Transação (WAL)}
+\label{sec:cenario_raid1_wal}
+Em PostgreSQL com durabilidade síncrona local, a confirmação de commit depende da persistência dos registros WAL necessários, não da gravação imediata de todas as páginas de dados. Vários commits podem compartilhar um flush; configurar \texttt{synchronous\_commit=off} permite confirmação antecipada com risco de perder transações recentes após falha. Isso é diferente de desligar \texttt{fsync} \cite{postgresql_wal_config}.
+
+Considere, como exemplo próprio, dois discos de 500 GB em espelho: a capacidade útil nominal é 500 GB, antes de metadados. Em write-through, a controladora espera a persistência nas cópias ativas. Em write-back protegido, pode confirmar quando os dados estão em cache recuperável após a falha de energia considerada; posteriormente faz o destage para os discos. Cache volátil sem proteção não deve ser confundido com persistência. Se um membro falhar, o volume pode continuar pelo sobrevivente, sujeito aos timeouts, à política da controladora e à ausência de outras falhas. O RAID não confirma a transação: ele conclui I/O, e o SGBD decide quando confirmar à aplicação.
+
+O espelho é uma opção para WAL pela ausência de atualização de paridade; o benefício de um volume dedicado deve ser medido quando controlador e mídia são compartilhados com os dados. O tamanho de uma página WAL tampouco fixa o tamanho de cada escrita física.
+
+\subsection{RAID 2 --- ECC em Nível de Bit (Código de Hamming)}
+O RAID~2 combina \textit{bit-level striping} com discos dedicados a bits de paridade calculados pelo código de Hamming \cite{silberschatz2020}. Cada byte de dados é distribuído bit a bit entre os discos de dados, e os discos adicionais armazenam bits de paridade ECC (\textit{Error-Correcting Code}) que permitem a detecção e a correção de erros de um único bit sem reler o disco defeituoso. O nível é considerado obsoleto: os discos atuais já incorporam ECC internamente na camada de firmware, tornando a proteção do RAID~2 redundante \cite{silberschatz2020}. Além disso, o \textit{bit-level striping} impede o processamento paralelo de requisições independentes, uma limitação que o RAID~5 resolve ao operar em nível de bloco.
+
+Para um código de Hamming simples com $k$ bits de dados e $r$ bits de verificação por palavra, exige-se $2^r\geq k+r+1$: os padrões de síndrome devem distinguir a ausência de erro e cada posição de erro simples. Por exemplo, quatro bits de dados e três de verificação atendem à desigualdade; esse exemplo não determina um mínimo universal de discos para todo RAID~2. A vantagem histórica é localizar e corrigir erro simples no conjunto; a desvantagem é o custo de unidades de verificação e da operação coordenada.
+
+\subsection{RAID 3 --- Paridade Dedicada com Distribuição Fina}
+O RAID~3 emprega distribuição fina, descrita como \textit{bit-interleaved} no material de Silberschatz e frequentemente como \textit{byte-level striping} em outras taxonomias \cite{dbbook_storage}. Em ambos os casos, trata-se de acesso coordenado aos discos com um disco de paridade dedicado \cite{silberschatz2020}: os bytes de dados são distribuídos entre $(n-1)$ discos, e o enésimo disco armazena os bytes de paridade (XOR). A taxa de transferência para operações sequenciais de grande volume --- varreduras completas de tabelas, cargas de dados em lote --- é excelente, pois todos os discos são acessados simultaneamente para cada requisição. Essa mesma característica, porém, impede que mais de uma requisição de I/O seja processada por vez, tornando o RAID~3 inadequado para cargas OLTP com múltiplas transações concorrentes. Para novas cargas OLTP, níveis em blocos oferecem concorrência mais adequada que essa organização histórica \cite{silberschatz2020}.
+
+\subsection{RAID 4 --- Paridade Dedicada em Nível de Bloco}
+O RAID~4 utiliza \textit{block-level striping} com um disco de paridade dedicado \cite{silberschatz2020}. A mudança de granularidade em relação ao RAID~3 --- blocos inteiros em vez de bytes --- permite que requisições de leitura independentes acessem discos diferentes em paralelo, pois cada requisição pequena é atendida por um único disco de dados sem acionar todos os demais.
+
+O gargalo, contudo, migra para o disco de paridade. Para cada escrita de bloco único (\textit{small write}), o controlador executa uma sequência \textit{read-modify-write} (RMW) de \textbf{4 operações físicas de I/O}:
+\begin{enumerate}
+    \item \textbf{Leitura do bloco de dados antigo} no disco de dados;
+    \item \textbf{Leitura do bloco de paridade antigo} no disco de paridade dedicado;
+    \item \textbf{Cálculo da nova paridade:} $P_{\mathrm{novo}} = P_{\mathrm{antigo}} \oplus D_{\mathrm{antigo}} \oplus D_{\mathrm{novo}}$;
+    \item \textbf{Escrita do bloco de dados novo} e \textbf{escrita da nova paridade} --- dois I/Os de gravação.
+\end{enumerate}
+O disco de paridade participa de todas as escritas, tornando-se o ponto único de contenção que limita severamente o IOPS de escrita do array inteiro \cite{silberschatz2020}. Para escritas de stripe completa, os dados novos são calculados diretamente, eliminando as duas leituras, mas o disco de paridade ainda participa de toda escrita. Esse gargalo é precisamente o que o RAID~5 elimina ao distribuir a paridade ciclicamente entre todos os discos.
+
+\subsection{RAID 5 --- Paridade Distribuída em Nível de Bloco}
+O RAID~5 oferece um compromisso entre redundância de uma falha e aproveitamento da capacidade, cuja adequação depende da carga e do risco aceitável \cite{silberschatz2020}. Utiliza \textit{block-level striping} com paridade distribuída ciclicamente entre todos os discos: em um layout ilustrativo, na \textit{stripe} $k$, o bloco de paridade é armazenado no disco $(k \bmod n)$, e os demais discos contêm blocos de dados \cite{silberschatz2020}. Essa distribuição elimina o ponto único de contenção do RAID~4, pois as escritas de paridade são balanceadas entre todos os discos.
+
+Leituras normais acessam os dados sem reconstrução por paridade; leituras sequenciais e aleatórias exploram a distribuição de forma diferente. Pequenas escritas com read-modify-write leem dado e paridade antigos e gravam ambos atualizados. O custo depende do tamanho e alinhamento da escrita e da presença de dados em cache. O nível garante tolerância à falha de um disco, com espaço útil de $(n-1)/n$ da capacidade bruta total. É amplamente utilizado para armazenamento de dados de leitura intensiva, \textit{data warehouses} e ambientes OLAP \cite{silberschatz2020}. O risco aparece em \textit{arrays} grandes ou com discos de alta capacidade: conforme demonstrado pela Equação~\ref{eq:mttdl_raid5}, o MTTDL degrada-se quadraticamente com $n$, e reconstruções longas estendem a janela de vulnerabilidade a uma segunda falha.
+
+A Tabela~\ref{tab:raid5_blocos} ilustra a distribuição dos primeiros 20 blocos lógicos e dos blocos de paridade em um arranjo de 5 discos, como exemplo próprio do conceito de paridade distribuída \cite{silberschatz2020}. O bloco de paridade da \textit{stripe} $k$ é armazenado no disco $(k \bmod 5)$; para cada conjunto de 4 blocos lógicos ($4k$ a $4k+3$), os demais 4 discos armazenam os dados. O padrão de posições se repete; outros layouts válidos usam outra rotação e ordem dos dados.
+
+\begin{table}[H]
+    \centering
+    \footnotesize
+    \renewcommand{\arraystretch}{1.4}
+    \begin{tabular}{|c|c|c|c|c|}
+        \hline
+        \textbf{Disco 0} & \textbf{Disco 1} & \textbf{Disco 2} & \textbf{Disco 3} & \textbf{Disco 4} \\
+        \hline
+        P0 & 0 & 1 & 2 & 3 \\
+        4 & P1 & 5 & 6 & 7 \\
+        8 & 9 & P2 & 10 & 11 \\
+        12 & 13 & 14 & P3 & 15 \\
+        16 & 17 & 18 & 19 & P4 \\
+        \hline
+    \end{tabular}
+    \caption{Distribuição de blocos de dados e paridade em um RAID~5 com 5 discos. Exemplo calculado a partir do layout descrito no texto.}
+    \label{tab:raid5_blocos}
+\end{table}
+
+\subsubsection{Cenário Prático: RAID 5 com Penalidade de Escrita (Write Penalty)}
+\label{sec:cenario_raid5_penalty}
+Cenário: Um catálogo de produtos com muitas consultas e poucas atualizações. Hardware: 4 discos de 1\,TB em um arranjo RAID~5 (distribuição bloco a bloco com paridade distribuída).
+Capacidade útil: $(N - 1) \times 1\text{ TB} = 3\text{ TB}$.
+Para atualizar um único bloco por read-modify-write, sem aproveitar cache, o controlador deve: ler o bloco antigo, ler a paridade antiga, calcular a nova paridade via XOR, e então gravar o bloco novo e a paridade nova --- resultando em 4 operações físicas de I/O nessa atualização \cite{raid5_io}.
+
+Em uma escrita de stripe completa, a paridade é calculada a partir dos novos dados; não é necessário ler dado e paridade antigos. Cache pode agregar atualizações e alterar o custo observado. A penalidade de quatro I/Os não se aplica indistintamente a todo comando de escrita \cite{raid5_io}.
+
+\subsection{RAID 6 --- Dupla Paridade Distribuída (P+Q)}
+O RAID~6 estende o RAID~5 ao empregar dois esquemas de paridade independentes (P e Q), ambos distribuídos entre todos os discos \cite{silberschatz2020}. P é calculado pelo XOR convencional; Em uma implementação Reed--Solomon, Q combina símbolos com coeficientes em campo finito; outros códigos de dupla falha, como RDP, usam relações XOR distintas. Q não pode ser apenas uma cópia de P, pois isso não permitiria resolver duas incógnitas \cite{plank2008,corbett2004}. Essa dupla paridade permite tolerar a falha simultânea de até dois discos. A penalidade de escrita é maior --- cada escrita exige a atualização de dois blocos de paridade ---, e leituras em modo degradado podem exigir reconstrução; em modo normal, os dados são lidos diretamente. Com espaço útil de $(n-2)/n$ e exigência mínima de 4 discos, RAID~6 deve ser escolhido pela análise conjunta de capacidade, tempo de \textit{rebuild}, criticidade e risco operacional, e não por um limiar universal de número de discos \cite{silberschatz2020}.
+
+\subsection{RAID 0+1 e RAID 10 --- Combinações de Striping e Mirroring}
+Os níveis compostos combinam RAID~0 (\textit{striping}) e RAID~1 (\textit{mirroring}) em uma hierarquia de dois níveis, e a ordem de aplicação produz diferenças significativas na tolerância a falhas \cite{silberschatz2020}.
+
+No RAID~0+1 (\textit{stripe-then-mirror}), os dados são primeiro distribuídos em \textit{stripes} entre grupos de discos e depois cada grupo é espelhado integralmente. A falha de um disco degrada metade inteira do espelho (o \textit{stripe} completo), reduzindo a tolerância geral. No RAID~10 (\textit{mirror-then-stripe}), pares de discos são primeiro espelhados e depois combinados em um \textit{stripe}. A falha de um disco afeta apenas o par local, e o sistema tolera múltiplas falhas desde que não ocorram ambas no mesmo par \cite{silberschatz2020}. O RAID~10 costuma ser preferido pela melhor resiliência a falhas múltiplas e pela reconstrução localizada --- apenas o par afetado precisa ser reconstruído. Ambos utilizam $50\%$ da capacidade bruta.
+
+Em SBDs, o RAID~10 é a configuração recomendada para servidores OLTP de alto desempenho (Oracle, SQL Server, PostgreSQL), onde leitura e escrita são intensivas e a disponibilidade é crítica \cite{silberschatz2020,redhat_raid}. O custo de espaço é justificado pela ausência de penalidade de cálculo de paridade nas escritas. Quando combinado com interfaces SAS com suporte e ativação de proteção fim-a-fim em toda a cadeia, o RAID~10 pode oferecer um perfil adequado a cargas transacionais, mas a escolha precisa ser comparada a outras mídias e configurações com a mesma carga.
+
+\subsection{Tabela Comparativa dos Níveis RAID Padrão}
+Nas tabelas, $n$ é o total de discos ativos e $C$ a capacidade de cada disco. Adota-se RAID~10 clássico com pares de espelhos; implementações como Linux MD admitem layouts diferentes, que não devem ser confundidos com essa topologia \cite{redhat_raid}. Capacidades são limites nominais, sem hot spares e metadados.
+\begin{table}[htbp]
+\centering\footnotesize
+\begin{tabularx}{\textwidth}{lllp{0.25\textwidth}X}
+\toprule
+Nível & Mínimo & Capacidade & Falhas toleradas & Fonte / acesso \\
+\midrule
+0 & 2 & $nC$ & Nenhuma & \cite{redhat_raid}; \acesso \\
+1 & 2 & $C$ & $m-1$ em $m$ cópias & \cite{redhat_raid}; \acesso \\
+2 & ECC & $kC$ & Depende do código; Hamming simples corrige uma falha & \cite{patterson1988}; \acesso \\
+3 & 3 & $(n-1)C$ & Uma & \cite{patterson1988}; \acesso \\
+4 & 3 & $(n-1)C$ & Uma & \cite{redhat_raid}; \acesso \\
+5 & 3 & $(n-1)C$ & Uma & \cite{redhat_raid}; \acesso \\
+6 & 4 & $(n-2)C$ & Quaisquer duas & \cite{redhat_raid}; \acesso \\
+0+1 & 4 & $nC/2$ & Uma garantida; outras apenas no grupo já perdido & \cite{dbbook_storage}; \acesso \\
+10 & 4 & $nC/2$ & Uma por par; até $n/2$ se em pares distintos & \cite{dbbook_storage}; \acesso \\
+\bottomrule
+\end{tabularx}
+\caption{Capacidade e tolerância dos layouts clássicos. Em RAID 2, $k$ conta discos de dados; os demais dependem do ECC. Mínimos convencionais, não restrições universais de software.}
+\label{tab:raid_comparativo}
+\end{table}
+
+\begin{table}[htbp]
+\centering\footnotesize
+\begin{tabularx}{\textwidth}{lXXX}
+\toprule
+Nível & Leitura / escrita & Vantagem e custo & Uso e fonte / acesso \\
+\midrule
+0 & Paralelismo sem redundância & Capacidade integral; falha compromete volume & Temporários reconstruíveis. \cite{redhat_raid}; \acesso \\
+1 & Leituras divididas; escritas replicadas & Rebuild pela cópia; custo de capacidade & WAL e volumes críticos. \cite{silberschatz2020}; \acesso \\
+2/3 & Transferência conjunta; baixa concorrência independente & Paralelismo por requisição; organização histórica & Estudo de ECC e distribuição fina. \cite{patterson1988}; \acesso \\
+4 & Leituras independentes; paridade concentra escritas & Simplicidade; contenção na paridade & Implementações com gestão específica de escrita. \cite{redhat_raid}; \acesso \\
+5 & Boa distribuição; RMW penaliza pequenas escritas & Uma unidade de capacidade em paridade & Leitura intensa com risco aceito. \cite{raid5_io}; \acesso \\
+6 & Dados diretos; duas paridades nas atualizações & Duas falhas; maior custo de escrita/rebuild & Capacidade e proteção adicional. \cite{plank2008}; \acesso \\
+0+1/10 & Leitura paralela; escrita duplicada & Sem cálculo de paridade; metade da capacidade & OLTP; preferir 10 pelo isolamento de falhas por par. \cite{dbbook_storage}; \acesso \\
+\bottomrule
+\end{tabularx}
+\caption{Síntese comparativa por tipo de operação, sem promessas universais de desempenho.}
+\end{table}
+
+\subsection{Exemplo comparativo de dimensionamento}
+Considere oito discos idênticos de 4 TB: RAID~0 fornece 32 TB; RAID~10, 16 TB; RAID~5, 28 TB; RAID~6, 24 TB. São cálculos próprios aplicando as expressões anteriores. A capacidade adicional de RAID~5 deve ser confrontada com sua menor tolerância durante o rebuild, não apenas com o custo por terabyte.
+
+Para mostrar o efeito de pequenas escritas aleatórias, suponha 150 IOPS por disco, 70\% de leituras e 30\% de escritas, sem cache, com carga uniformemente distribuída. Se $p$ é o número de I/Os físicos por escrita, uma estimativa por contagem de operações é
+\[
+I_{\mathrm{lógico}}\approx\frac{nI_{\mathrm{disco}}}{f_L+p f_E}.
+\]
+Para espelhamento, $p=2$; para RMW de RAID~5, $p=4$; para dupla paridade com três leituras e três escritas, $p=6$. O cenário resulta, respectivamente, em aproximadamente 923, 632 e 480 IOPS lógicos. São resultados calculados, não medições: ignoram diferenças de custo entre leitura e escrita, dependências temporais do RMW e efeitos do controlador. Escrita sequencial de stripes completas exige outro modelo. A utilidade do exemplo é mostrar por que a proporção de escritas altera a escolha.
+
+Com quatro discos, o RAID~10 formado por pares $(A,B)$ e $(C,D)$ suporta perder $A$ e $C$, mas não $A$ e $B$. No RAID~0+1 com grupos $(A,B)$ e $(C,D)$, perder $A$ inutiliza o primeiro grupo; perder depois $C$ compromete o espelho inteiro. Este exemplo próprio explicita que ``tolerar duas falhas'' em RAID~10 depende de quais discos falham.
+
+\subsection{Integridade, reconstrução e limites da proteção}
+RAID protege contra determinadas falhas físicas. Exclusão acidental e corrupção lógica podem ser propagadas às cópias; a proteção exige backups independentes com restauração testada. Alta disponibilidade do SBD também depende de host, controladoras, caminhos, energia e mecanismos de recuperação.
+
+Em RAID com paridade, queda de energia entre a gravação de dados e de paridade pode deixá-los inconsistentes: é o \textit{write hole}. Implementações usam mecanismos como journal ou cache protegido; o simples uso de XOR não torna uma atualização atômica \cite{spdk_raid5f}. Durante a reconstrução, um erro de leitura irrecuperável em um sobrevivente pode impedir recompor parte dos dados. Isso difere da perda completa de um segundo disco.
+
+Checksums e scrubbing periódico ajudam a detectar problemas latentes, mas é necessário identificar a cópia correta antes de reparar. Paridade inconsistente não informa, sozinha, qual bloco está errado; reconstruir a partir de dados corrompidos pode propagar o erro \cite{krioukov2008}. Hot spare reduz a espera pelo início da reconstrução, sem aumentar a quantidade de paridades do nível escolhido. A carga de rebuild deve ser dimensionada junto da aplicação e do tempo de recuperação aceitável.
+
+\section{Níveis de RAID Não Padrão}
+\label{sec:raid_nao_padrao}
+Essas designações identificam produtos, algoritmos ou modos de configuração. Não formam uma escala de qualidade: o número maior não implica maior confiabilidade. A implementação e a documentação do produto definem as propriedades aplicáveis.
+
+\subsection{RAID 1.5 (HighPoint)}
+O manual primário HPT370/372N da HighPoint, revisão 1.0 de fevereiro de 2003, identifica RAID~1.5 como modo de espelho, com duplicação e reconstrução após falha. O manual DFI com controlador HighPoint 372N descreve distribuição e espelhamento usando dois discos \cite{highpoint_15,dfi_15}. Trata-se de tecnologia ATA histórica, vinculada ao controlador documentado.
+
+O objetivo é combinar leitura pelos dois membros com redundância de cópia. Para dois discos iguais completamente espelhados, a capacidade útil é a de um disco e uma falha pode ser tolerada; essa conclusão decorre da duplicação, não do número ``1.5''. A vantagem é obter redundância em uma instalação pequena. A desvantagem é depender de controladora, driver e recuperação específicos, sem evidência de superioridade geral sobre RAID~1. Sua aplicação neste estudo é manutenção de sistemas legados; RAID~1.5 não deve ser confundido com RAID~15 ou RAID~10. Os manuais consultados são cópias históricas hospedadas por terceiros.
+
+\subsection{RAID 7 (Storage Computer Corporation)}
+A documentação societária da própria Storage Computer descreve RAID~7 como tecnologia proprietária empregada nas linhas StorageSuite e OmniRaid. A arquitetura reúne controladores, memória centralizada e distribuída, mapeamento proprietário e sistema operacional de tempo real \cite{storagecomputer_7}. O objetivo é desacoplar o atendimento ao host das operações internas e explorar cache e concorrência no subsistema.
+
+A vantagem potencial é reduzir latência percebida e coordenar múltiplos acessos; o desempenho sustentável continua limitado pelo destage e pelos discos. As desvantagens são dependência da implementação, recuperação do cache e suporte do fabricante. Não há uma fórmula universal de capacidade ou número de falhas dedutível do nome. Para SBDs, é uma referência histórica de arrays inteligentes: uma avaliação concreta precisa da configuração de proteção e de testes, em vez de tomar alegações comerciais como benchmark independente.
+
+\subsection{RAID-DP (NetApp)}
+RAID-DP utiliza duas unidades de paridade por grupo e permite recuperar quaisquer duas falhas de disco \cite{netapp_raid_dp}. O fundamento de paridade por linhas e diagonais é documentado no trabalho de Corbett e colaboradores: RDP mantém dados sem codificação e calcula conjuntos distintos de XOR. A segunda relação permite recuperar duas perdas sem simplesmente duplicar a primeira paridade \cite{corbett2004}.
+
+A vantagem é proteção dupla com capacidade equivalente a dois discos destinada à redundância. O custo envolve espaço, atualização das duas paridades e reconstrução. Não se deve equiparar o desempenho do conjunto ONTAP a um RAID~6 genérico: a política de escrita e o restante do software também importam. Para bancos de dados instalados nesse ambiente, RAID-DP é uma opção de proteção local, complementada por backup e disponibilidade de controladoras. O tamanho do grupo deve seguir a documentação da versão e do hardware, sem um limite acadêmico universal.
+
+\subsection{RAID-S (EMC/Symmetrix)}
+O artigo técnico de Brett Quinn, da EMC, preservado pela NASA, descreve RAID-S por grupos de volumes de dados e paridade. Na configuração histórica 3+1, a capacidade útil é 75\%; na variante EOS 7+1, 87,5\%. Esses percentuais referem-se ao arranjo documentado, antes de outras reservas \cite{raid_s_nasa}.
+
+Cada volume de dados mantém seu mapeamento em um disco, sem o striping tradicional entre todos os membros; com Hyper-Volume Extension, volumes de paridade podem ser distribuídos pelos discos. Discos capazes de XOR participam do cálculo, reduzindo trabalho da controladora. A vantagem é combinar economia de capacidade e integração com cache; permanecem penalidade de atualização e dependência de hardware e microcódigo. Paridade simples não garante recuperar duas perdas no mesmo grupo, embora volumes sobreviventes possam permanecer acessíveis. A aplicação é o ambiente Symmetrix histórico, com análise específica de carga e recuperação, sem presumir adaptação automática ao padrão de acesso \cite{raid_s_nasa}.
+
+\subsection{Intel Matrix RAID}
+Matrix RAID permite até dois volumes RAID sobre o mesmo conjunto físico, com combinações dependentes da controladora \cite{intel_matrix}. Por exemplo, uma região de dois discos pode ser espelhada para dados persistentes e outra usada em RAID~0 para temporários. Cada volume herda a proteção do seu nível; não se cria um nível adicional de redundância.
+
+A vantagem é distribuir capacidade entre objetivos distintos sem adquirir outro conjunto de discos. A desvantagem é compartilhar recursos e falhas físicas: perder um membro afeta o volume RAID~0 e degrada o espelho. Para desenvolvimento ou instalações pequenas, essa flexibilidade pode ser útil; para isolamento operacional de cargas críticas, volumes no mesmo conjunto não equivalem a discos independentes.
+
+\subsection{Síntese das variantes}
+RAID~1.5 enfatiza espelhamento com otimização de acesso em produto legado; RAID~7, arquitetura de controladora e cache; RAID-DP, dupla paridade; RAID-S, integração de volumes e XOR no Symmetrix; Matrix, particionamento do conjunto em volumes com níveis distintos. As fontes primárias permitem distinguir inovação algorítmica de política de cache e organização comercial. A falta de padronização não demonstra ausência de mérito técnico, mas exige documentação específica para comparar e recuperar os dados.
+
+\begin{table}[htbp]
+\centering\footnotesize
+\begin{tabularx}{\textwidth}{p{0.10\textwidth}p{0.12\textwidth}p{0.11\textwidth}p{0.09\textwidth}XX}
+\toprule
+Variante & Fabricante & Redundância & Falhas tol. & Vantagem & Limitação / aplicação \\
+\midrule
+RAID 1.5 & HighPoint (ATA) & Espelhamento total & 1 & Redundância em 2 discos com leitura pelos dois & Dependência de controladora legada; sem ganho universal sobre RAID~1 \cite{highpoint_15}. \\
+RAID 7 & Storage Computer Corp. & Paridade (propriet.) & 1+ & Cache centralizado; RTOS reduz latência percebida & Implementação proprietária; desempenho limitado pelo destage e pelos discos \cite{storagecomputer_7}. \\
+RAID-DP & NetApp (ONTAP) & Duas paridades (RDP) & 2 & Proteção dupla; sem duplicar capacidade inteira & Tamanho de grupo específico do ONTAP; custo de duas escritas de paridade \cite{corbett2004,netapp_raid_dp}. \\
+RAID-S & EMC (Symmetrix) & Paridade por volume & 1 (config. 3+1) & Economia de capacidade (75\% ou 87,5\%); XOR no disco & Dependência de hardware e microcódigo Symmetrix; uma paridade não recupera duas perdas no grupo \cite{raid_s_nasa}. \\
+Matrix & Intel RST & Níveis mistos (p.ex. 0+1) & Por volume & Dois volumes em mesmo conjunto físico & Falha física afeta ambos os volumes; sem isolamento real de cargas críticas \cite{intel_matrix}. \\
+\bottomrule
+\end{tabularx}
+\caption{Comparação das variantes proprietárias/não padrão. Capacidades e tolerâncias referem-se às configurações documentadas; generalização para outros produtos ou versões exige verificação.}
+\label{tab:raid_nao_padrao}
+\end{table}
+
+\section{Integração DAS e RAID em SBDs}
+\label{sec:das_raid_integracao}
+A escolha da interface DAS e do nível RAID não são decisões independentes: a banda agregada dos discos deve ser suportada pela interface do controlador, e os recursos de manutenção (hot-plug, caminhos redundantes) afetam diretamente o MTTR --- e, portanto, o MTTDL. A Tabela~\ref{tab:das_raid_recomendacao} resume as combinações mais comuns em ambientes de SBD.
+
+\begin{table}[htbp]
+\centering\footnotesize
+\begin{tabularx}{\textwidth}{p{0.15\textwidth}p{0.15\textwidth}p{0.13\textwidth}X}
+\toprule
+Carga SBD & Interface recomendada & Nível RAID & Justificativa \\
+\midrule
+OLTP intenso (WAL) & SAS full-duplex + HBA RAID & RAID~10 & Escritas aleatórias; sem penalidade de paridade; hot-plug reduz MTTR \cite{silberschatz2020}. \\
+OLTP + dados & SAS ou SATA (NVMe) + HBA & RAID~5 / RAID~6 & Equilíbrio capacidade/proteção; RAID~6 para arrays $\geq$8 discos ou discos $\geq$4 TB \cite{silberschatz2020,plank2008}. \\
+OLAP / DW & SATA (custo/TB) + HBA & RAID~6 & Leitura dominante; proteção dupla compensa reconstrução longa em discos grandes \cite{elmasri2016}. \\
+Backup externo & eSATA / USB 3.2--USB4 & RAID~1 ou sem RAID & Redundância local; backup em mídia separada é obrigatório; USB4 admite débitos $>$1 GB/s \cite{usb4_announcement}. \\
+Desenv. / temporários & USB 3.2 / SATA & RAID~0 & Dados reconstruíveis; nunca para dados persistentes \cite{silberschatz2020}. \\
+Legado com FireWire & FireWire 800 & RAID~1 & Apenas por compatibilidade existente; substituir por SAS/USB quando possível \cite{ti_firewire}. \\
+\bottomrule
+\end{tabularx}
+\caption{Combinações de interface DAS e nível RAID por tipo de carga em SBD. Recomendações são ponto de partida; medições representativas da carga real devem orientar a decisão final.}
+\label{tab:das_raid_recomendacao}
+\end{table}
+
+Dois princípios transversais aplicam-se a todas as combinações. Primeiro, a banda da interface deve superar a banda agregada de I/O esperada --- um HBA SAS-3 (12 Gb/s por porta) saturado por muitos discos NVMe é um gargalo tão grave quanto um nível RAID inadequado. Segundo, hot-spare local encurta o MTTR sem intervenção humana, impactando diretamente o MTTDL de RAID~5 e RAID~6 (Equações~\ref{eq:mttdl_raid5} e \ref{eq:mttdl_raid6}). Nenhum nível RAID substitui backup independente testado: corrupção lógica, erro humano e falhas correlacionadas (e.g., surto de tensão) são riscos que a redundância de discos não cobre \cite{krioukov2008}.
+
+\section{Conclusão}
+\label{sec:conclusao}
+O projeto de DAS para um SBD começa pela carga: latência de commit, proporção e tamanho das leituras e escritas, capacidade e tempo aceitável de recuperação. A interface deve atender ao fluxo agregado e aos requisitos de manutenção; a escolha entre SATA, SAS e conexão externa exige examinar o dispositivo, o controlador e os caminhos completos --- e como esses parâmetros interagem com o nível de RAID conforme discutido na Seção~\ref{sec:das_raid_integracao}.
+
+RAID~10 é um candidato para escrita aleatória intensa, ao custo de metade da capacidade na configuração com duas cópias. RAID~5 e RAID~6 aproveitam melhor a capacidade, mas exigem avaliar atualização de paridade e operação degradada; RAID~6 suporta uma falha adicional. RAID~0 é restrito, nesta recomendação, a conteúdo recuperável por outra origem. A decisão final deve usar medições representativas e exercícios de restauração. Os modelos de MTTDL explicam tendências, enquanto backup, integridade e disponibilidade do serviço tratam riscos que o nível RAID isolado não cobre.
+
+\section{Considerações e dúvidas em aberto}
+Uma avaliação experimental complementar deve medir latência de commit, IOPS e vazão em operação normal e durante rebuild, registrando mídia, cache, tamanho de I/O e concorrência. Também deve testar a restauração de backup e a detecção de erros latentes. O presente estudo não realizou esses benchmarks; seus exemplos são analíticos. Para equipamentos proprietários históricos, a disponibilidade de documentação não assegura suporte atual ou possibilidade de recuperar um array em outra controladora.
+
+\section{Post-Mortem}
+\label{sec:postmortem}
+% =====================================================================
+
+\subsection{Divisão de responsabilidades e autoria}
+A tabela a seguir reproduz a divisão registrada anteriormente pelo grupo. Ela não atribui aos integrantes as alterações executadas pela IA nesta revisão; essas alterações são identificadas separadamente abaixo.
+
+\begin{table}[H]
+    \centering
+    \renewcommand{\arraystretch}{1.5}
+    \begin{tabularx}{\textwidth}{|l|X|}
+        \hline
+        \textbf{Integrante} & \textbf{Responsabilidades, decisões tomadas e justificativa} \\
+        \hline
+        Daniel R. S. Barros & Interfaces DAS e revisão de fontes técnicas para SATA, eSATA, SAS, FireWire, USB e HBA. Priorizou documentação técnica para dados atuais de interface. \\
+        \hline
+        Hugo Leandro Antunes & RAID~0--4, \textit{striping} e blocos de paridade. Organizou a explicação por granularidade de distribuição, relacionando arquitetura, paralelismo e gargalos de escrita. \\
+        \hline
+        Jeson Wen Chen & RAID~5/6 e métricas MTTF, MTTR, MTBF e MTTDL. Explicitou hipóteses das fórmulas e evitou limiar universal para RAID~6. \\
+        \hline
+        João Batista B. Junior & RAID~0+1/10, RAID não padrão e comparação de aplicações em SBD. Diferenciou níveis compostos e qualificou implementações proprietárias. \\
+        \hline
+        Pedro Cintra Silveira & Integração do \LaTeX{}, slides, referências e revisão final de coerência. Manteve consistência entre relatório, slides e checklist de entrega. \\
+        \hline
+    \end{tabularx}
+    \caption{Divisão de responsabilidades entre os integrantes do grupo.}
+    \label{tab:autoria}
+\end{table}
+
+\subsection{Decisões do grupo}
+O grupo adotou a proposta como fonte de verdade para escopo e entrega. Para interfaces atuais e RAID proprietário, decidiu usar documentação oficial ou explicitar a limitação da fonte; também decidiu não usar limiar universal de número de discos para recomendar RAID~6, pois a escolha depende de MTTR, capacidade, carga, criticidade e risco operacional. O responsável individual por cada decisão deve ser confirmado pelos integrantes antes da entrega.
+
+\subsection{Ferramentas de IA utilizadas}
+Os registros anteriores declaram GPT-5.6 Terra, Gemini~3.1 e Claude Sonnet, além da grafia ``Claude Optus~4.6, cuja denominação não foi confirmada. A revisão técnica desta sessão foi executada com Codex, por solicitação do usuário, com consulta a fontes externas. Não foi inferida a identidade do integrante que enviou os prompts.
+
+\subsection{Log dos prompts-chave}
+
+\subsubsection{Prompt 1}
+\begin{lstlisting}[language=,caption={Prompt utilizado para estrutura inicial e tópico 1.}]
+Fazendo uma analise e buscando quais sao os pontos que faltam para a
+realizacao da tarefa, coloque um checklist de tarefas no README.
+\end{lstlisting}
+
+\noindent\textbf{Resposta obtida:} checklist de entrega e estrutura inicial da proposta.
+
+\medskip
+\noindent\textbf{Uso pelo grupo:} o checklist passou a orientar o controle dos produtos obrigatórios.
+
+\subsubsection{Prompts 2 a 4 — registros resumidos}
+\begin{itemize}
+    \item \textbf{Fluxo de redação e revisão:} gerar uma subseção em \LaTeX{} por vez a partir da bibliografia fornecida e corrigir erros técnicos, de formatação ou prolixidade apontados pelo grupo.
+    \item \textbf{Estrutura do estudo DAS e RAID:} produzir rascunho em Markdown para interfaces, desempenho, confiabilidade, striping e RAID padrão e não padrão.
+    \item \textbf{Auditoria de coerência:} confrontar proposta.md e readme.md quanto a escopo, precisão técnica, clareza e lacunas.
+\end{itemize}
+\noindent Estes itens são resumos históricos, não transcrições literais. Datas, responsáveis individuais e ferramenta de cada prompt não estão integralmente documentados; o quarto prompt foi registrado como executado com GPT-5.6 Terra.
+
+
+\subsubsection{Prompt da revisão técnica desta sessão}
+\noindent\textbf{Data de registro:} 10/09/2026. \textbf{Ferramenta:} Codex. \textbf{Solicitante:} usuário da sessão, sem atribuição individual confirmada.
+\begin{quote}\small
+``Faça correções todas as necessaárias. Posteriromente, melhore necessário use fonte externas também e as coloque referenciada no refbib e no final do maintext''
+\end{quote}
+\noindent\textbf{Contexto:} pedido posterior a uma avaliação crítica do relatório frente aos critérios de DAS e RAID. A grafia do prompt foi preservada.
+
+\noindent\textbf{Resultado produzido pela IA:} revisão de interfaces, modelos de confiabilidade, comparação de RAID, variantes proprietárias, limitações de integridade e referências. Os exemplos quantitativos foram identificados como cálculos próprios; nenhuma medição foi inventada. A autoria humana das decisões anteriores continua dependendo dos registros do grupo.
+
+\subsubsection{Decisões editoriais executadas nesta revisão (10/09/2026 — Codex)}
+A IA adotou fontes primárias para especificações, um modelo de reparo serial explicitamente delimitado para MTTDL e exemplos de carga sem aparência de benchmark. A consulta a manuais históricos permitiu aprofundar RAID~1.5 e RAID-S. Essas decisões implementam o pedido de correção do usuário e não são apresentadas como decisões individuais dos integrantes.
+
+\subsubsection{Prompt da revisão crítica e correção (11/09/2026 — Antigravity)}
+\noindent\textbf{Data de registro:} 11/09/2026. \textbf{Ferramenta:} Antigravity (Claude Sonnet). \textbf{Solicitante:} usuário da sessão.
+\begin{quote}\small
+``Sabendo que você é o professor, analise esse documento segundo os critérios, veja se atende. Seja crítico e rigoroso. Faça as correções necessárias e se preciso aponte as outras fontes que seriam importantes.''
+\end{quote}
+\noindent\textbf{Resultado produzido pela IA:} análise crítica por critério do enunciado; oito correções aplicadas ao \texttt{main.tex}; três referências adicionadas ao \texttt{ref.bib} (IEEE~1394-2008, SAS-4 T10, SATA Rev.~3.5a). Lacunas identificadas: \textit{byte-level striping} ausente da seção de striping; tabela DAS rasa; ausência de seção DAS$\leftrightarrow$RAID; sem tabela comparativa dos RAID não padrão; MTTDL sem definição introdutória; MTBF sem equação explícita; RAID~4 sem detalhe RMW; terminologia mirroring/shadowing ambígua. Todas as correções de alta prioridade foram aplicadas nesta sessão.
+
+\newpage
+\subsection{Erros gerados pela IA e correções realizadas}
+
+\begingroup
+\footnotesize
+\renewcommand{\arraystretch}{1.5}
+\begin{longtable}{|p{0.04\textwidth}|p{0.12\textwidth}|p{0.22\textwidth}|p{0.28\textwidth}|p{0.14\textwidth}|}
+\hline
+\textbf{\#} & \textbf{Onde} & \textbf{Erro gerado pela IA} & \textbf{Correção e fonte} & \textbf{Quem corrigiu} \\
+\hline
+\endfirsthead
+\multicolumn{5}{c}{{\tablename\ \thetable{} -- Continuação da página anterior}} \\
+\hline
+\textbf{\#} & \textbf{Onde} & \textbf{Erro gerado pela IA} & \textbf{Correção e fonte} & \textbf{Quem corrigiu} \\
+\hline
+\endhead
+\hline \multicolumn{5}{r}{{Continua na próxima página...}} \\
+\endfoot
+\hline
+\endlastfoot
+1 & RAID~2 e Tabela~\ref{tab:raid_comparativo} & Foi informado ``mínimo: 3 discos'' como regra universal. & O número de discos de redundância depende da implementação do código de Hamming e da quantidade de discos de dados; removida a regra universal. Base: Elmasri e Navathe, Seção~16.10, p.~587. & Revisão técnica do grupo (confirmar responsável) \\
+\hline
+2 & RAID-DP & Foram atribuídos algoritmo interno e limite universal de 28 discos sem fonte primária suficiente. & Na revisão anterior, mantidas duas paridades e duas falhas. Nesta sessão, o fundamento RDP foi acrescentado com fonte primária \cite{corbett2004}; tamanho de grupo continua específico do ONTAP. & Revisão técnica do grupo (confirmar responsável) \\
+\hline
+3 & RAID-S & Foi descrito como algoritmo que adapta dinamicamente a distribuição de dados conforme o acesso. & Corrigido: RAID-S/Parity RAID é tecnologia proprietária Symmetrix baseada em grupos de volumes de dados e paridade; não há evidência para a alegada adaptação dinâmica. Base: documentação técnica histórica NASA/EMC. & Revisão técnica do grupo (confirmar responsável) \\
+\hline
+4 & Interfaces DAS & A tabela usava ``SATA II/III'' e atribuía ``MTBF relativo'' à interface, como se fosse atributo do protocolo. & Adotada a nomenclatura SATA-IO (SATA 3~Gb/s e 6~Gb/s); confiabilidade passou a ser tratada como atributo do disco, firmware, ambiente e controlador. Base: SATA-IO. & Revisão técnica do grupo (confirmar responsável) \\
+\hline
+5 & Interfaces & SAS-4: agregado de 4.500 MB/s; filas SAS fixadas em 256. & Corrigido cálculo para 4.800 MB/s e fila dependente do produto \cite{microchip_sas4,seagate_sas}. & Codex (IA), 10/09/2026 \\
+\hline
+6 & SATA/USB & AHCI confundido com protocolo físico; energia USB vinculada à geração. & Separadas interface de programação, transporte e Power Delivery \cite{intel_ahci,usb_pd}. & Codex (IA), 10/09/2026 \\
+\hline
+7 & eSATA & Origem atribuída à revisão SATA 2.6. & Especificações externas datadas de 2004 \cite{sata_esata}. & Codex (IA), 10/09/2026 \\
+\hline
+8 & RAID 1.5/7 & Atribuição a LSI/Broadcom e descrições sem funcionamento. & Identificada HighPoint; aprofundado RAID 7 com documentação primária \cite{highpoint_15,storagecomputer_7}. & Codex (IA), 10/09/2026 \\
+\hline
+9 & Confiabilidade & Igualdades de MTTDL sem modelo de reparo suficiente; MTBF sem convenção. & Derivadas aproximações com reparo serial exponencial e delimitada contagem de tempo \cite{nist_mtbf}. & Codex (IA), 10/09/2026 \\
+\hline
+10 & RAID 5/WAL & Quatro I/Os em toda escrita; commit sempre aguardando ambos os discos. & Separados RMW/full stripe, cache e modos de durabilidade \cite{raid5_io,postgresql_wal_config}. & Codex (IA), 10/09/2026 \\
+\hline
+11 & Integridade & Redundância apresentada como garantia de serviço ininterrupto. & Acrescentados limites, write hole, checksums e recuperação \cite{spdk_raid5f,krioukov2008}. & Codex (IA), 10/09/2026 \\
+\hline
+12 & Bibliografia & Link IBM genérico e PostgreSQL 16 com URL current. & Substituídas fontes e fixada versão; corrigida autoria do artigo EMC preservado pela NASA. & Codex (IA), 10/09/2026 \\
+\hline
+13 & Shadowing & Confusão entre espelhamento físico e ponto de commit na paginação sombra. & Separadas camadas e descrita troca atômica da referência persistente \cite{dbbook_storage,elmasri2016}. & Codex (IA), 10/09/2026 \\
+\hline
+14 & Comparação & Eficiência fixa de RAID 1 com múltiplas cópias e avaliações vagas de escrita. & Usada eficiência 1/m; comparadas cargas e acrescentados exemplos calculados. & Codex (IA), 10/09/2026 \\
+\hline
+\caption{Erros gerados pela IA, correções aplicadas e responsáveis.}
+\label{tab:erros_ia} \\
+\end{longtable}
+\endgroup
+
+% =====================================================================
+\clearpage
+\phantomsection
+\addcontentsline{toc}{section}{Referências bibliográficas}
+\renewcommand{\refname}{Referências bibliográficas}
+\bibliographystyle{unsrt}
+\bibliography{ref}
+
+\end{document}
