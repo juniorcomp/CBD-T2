@@ -14,4 +14,5 @@ dist/
 *.synctex.gz
 *.pdf
 !main.pdf
+!relatorio/folha-de-rosto.pdf
 !slides/slides-export.pdf
